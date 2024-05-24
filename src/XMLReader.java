@@ -1,8 +1,7 @@
 import org.w3c.dom.*;
 import javax.xml.parsers.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 class XMLReader {
     public static void main(String[] args) {
@@ -23,6 +22,7 @@ class XMLReader {
 
             NodeList variableList = doc.getElementsByTagName("VARIABLE");
             List<Variable> variables = new ArrayList<>();
+            Map<String, Variable> variableMap = new HashMap<>();
 
             for (int i = 0; i < variableList.getLength(); i++) {
                 Node variableNode = variableList.item(i);
@@ -37,11 +37,13 @@ class XMLReader {
                     }
 
                     variables.add(variable);
+                    variableMap.put(name, variable);
                 }
             }
 
             NodeList definitionList = doc.getElementsByTagName("DEFINITION");
             List<Definition> definitions = new ArrayList<>();
+            Map<String, Definition> definitionMap = new HashMap<>();
 
             for (int i = 0; i < definitionList.getLength(); i++) {
                 Node definitionNode = definitionList.item(i);
@@ -66,27 +68,111 @@ class XMLReader {
                                 break;
                             }
                         }
-                        definition.addGiven(givenList.item(j).getTextContent(), v1, v2);
+
+                        if (v1 != null && v2 != null) {
+                            definition.addGiven(givenList.item(j).getTextContent(), v1, v2);
+                        }
                     }
 
                     String table = definitionElement.getElementsByTagName("TABLE").item(0).getTextContent();
                     definition.setTable(table);
 
                     definitions.add(definition);
+                    definitionMap.put(forVar, definition);
                 }
             }
 
-            // Print out variables and definitions for verification
-            for (Variable variable : variables) {
-                System.out.println(variable);
+            // Combine the variables and definitions into a joint probability table
+            Map<String, Double> jointProbabilityTable = calculateJointProbabilityTable(variables, definitions);
+
+            // Print out the joint probability table for verification
+            for (Map.Entry<String, Double> entry : jointProbabilityTable.entrySet()) {
+                System.out.println(entry.getKey() + ": " + entry.getValue());
+                // + String.format("%.5f", entry.getValue())
             }
 
-            for (Definition definition : definitions) {
-                System.out.println(definition);
-            }
+//            // Print out variables and definitions for verification
+//            for (Variable variable : variables) {
+//                System.out.println(variable);
+//            }
+//
+//            for (Definition definition : definitions) {
+//                System.out.println(definition);
+//            }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private static Map<String, Double> calculateJointProbabilityTable(List<Variable> variables, List<Definition> definitions) {
+        Map<String, Double> jointProbabilityTable = new LinkedHashMap<>();
+
+        // Base case for recursion - fill in the probabilities for leaf nodes (variables with no parents)
+        for (Definition def : definitions) {
+            if (def.givens.isEmpty()) {
+                Variable var = getVariableByName(variables, def.forVar);
+                for (int i = 0; i < var.outcomes.size(); i++) {
+                    String key = def.forVar + "=" + var.outcomes.get(i);
+                    jointProbabilityTable.put(key, def.probabilities.get(i));
+                }
+            }
+        }
+
+        // Recursive case - calculate joint probabilities for variables with parents
+        calculateJointProbabilities(variables, definitions, jointProbabilityTable, new LinkedHashMap<>(), 0);
+
+        return jointProbabilityTable;
+    }
+
+    private static void calculateJointProbabilities(List<Variable> variables, List<Definition> definitions,
+                                                    Map<String, Double> jointProbabilityTable, Map<String, String> currentAssignment, int index) {
+        if (index == variables.size()) {
+            double jointProb = 1.0;
+            for (Definition def : definitions) {
+                List<String> parentAssignments = new ArrayList<>();
+                for (String parent : def.givens) {
+                    parentAssignments.add(currentAssignment.get(parent));
+                }
+                String childAssignment = currentAssignment.get(def.forVar);
+                double prob = getProbability(def, parentAssignments, childAssignment);
+                jointProb *= prob;
+            }
+            String key = currentAssignment.toString();
+            jointProbabilityTable.put(key, jointProb);
+            return;
+        }
+
+        Variable var = variables.get(index);
+        for (String outcome : var.outcomes) {
+            currentAssignment.put(var.name, outcome);
+            calculateJointProbabilities(variables, definitions, jointProbabilityTable, currentAssignment, index + 1);
+        }
+    }
+
+    private static double getProbability(Definition def, List<String> parentAssignments, String childAssignment) {
+        int index = 0;
+        int multiplier = 1;
+        for (int i = parentAssignments.size() - 1; i >= 0; i--) {
+            String parentOutcome = parentAssignments.get(i);
+            if (parentOutcome.equals("T")) {
+                index += multiplier;
+            }
+            multiplier *= 2;
+        }
+        if (childAssignment.equals("T")) {
+            return def.probabilities.get(index);
+        } else {
+            return def.probabilities.get(index + 1);
+        }
+    }
+
+    private static Variable getVariableByName(List<Variable> variables, String name) {
+        for (Variable var : variables) {
+            if (var.name.equals(name)) {
+                return var;
+            }
+        }
+        return null;
     }
 }

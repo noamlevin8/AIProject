@@ -4,7 +4,7 @@ import java.util.List;
 class Definition {
     String forVar;
     List<String> givens = new ArrayList<>();
-    String table;
+    List<Double> probabilities = new ArrayList<>();
 
     Definition(String forVar) {
         this.forVar = forVar;
@@ -16,16 +16,31 @@ class Definition {
         v2.addChildren(v1);
     }
 
+//    void setTable(String table) {
+//        this.table = table;
+//    }
+
     void setTable(String table) {
-        this.table = table;
+        String[] probs = table.trim().split("\\s+");
+        for (String prob : probs) {
+            probabilities.add(Double.parseDouble(prob));
+        }
     }
 
+    //    @Override
+//    public String toString() {
+//        return "Definition{" +
+//                "forVar='" + forVar + '\'' +
+//                ", givens=" + givens +
+//                ", table='" + table + '\'' +
+//                '}';
+//    }
     @Override
     public String toString() {
         return "Definition{" +
                 "forVar='" + forVar + '\'' +
                 ", givens=" + givens +
-                ", table='" + table + '\'' +
+                ", probabilities=" + probabilities +
                 '}';
     }
 }
