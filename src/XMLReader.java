@@ -3,15 +3,77 @@ import javax.xml.parsers.*;
 import java.io.*;
 import java.util.*;
 
-class XMLReader {
-    public static void main(String[] args) {
-        try {
+class XMLReader
+{
+    private static String[][] createCPTTable(Definition definition, Map<String, Variable> variableMap)
+    {
+        Variable variable = variableMap.get(definition.forVar);
+        if (variable == null)
+        {
+            return null;
+        }
+
+        int numOutcomes = variable.outcomes.size();
+        int numGivenCombinations = definition.probabilities.size() / numOutcomes;
+
+        // Create the table with appropriate size, including header row
+        String[][] table = new String[numGivenCombinations * numOutcomes + 1][definition.givens.size() + 2];
+
+        // Fill in the header row
+        for (int j = 0; j < definition.givens.size(); j++)
+        {
+            table[0][j] = definition.givens.get(j);
+        }
+
+        table[0][definition.givens.size()] = definition.forVar;
+        table[0][definition.givens.size() + 1] = "Probability";
+
+        // Fill the table rows with the given combinations, outcomes, and probabilities
+        for (int i = 0; i < numGivenCombinations; i++)
+        {
+            for (int k = 0; k < numOutcomes; k++)
+            {
+                int row = i * numOutcomes + k + 1; // Adjust row index to account for header
+
+                // Fill in the given variable values (Needs change)
+                for (int j = 0; j < definition.givens.size(); j++)
+                {
+                    int givenIndex = ((i / (int) Math.pow(definition.givens.size(), j)) % definition.givens.size());
+                    table[row][j] = variableMap.get(definition.givens.get(j)).outcomes.get(givenIndex);
+                }
+
+                // Fill in the outcome and probability
+                table[row][definition.givens.size()] = variable.outcomes.get(k);
+                double prob = definition.probabilities.get(i * numOutcomes + k);
+                table[row][definition.givens.size() + 1] = String.format("%.5f", prob);
+            }
+        }
+
+        return table;
+    }
+    private static void printCPTTable(String[][] table)
+    {
+        // Print the header
+        for (String[] row : table)
+        {
+            for (String cell : row)
+            {
+                System.out.print(cell + "\t");
+            }
+            System.out.println();
+        }
+    }
+    public static void main(String[] args)
+    {
+        try
+        {
             // Print the current working directory
             System.out.println("Current working directory: " + new File(".").getAbsolutePath());
 
             // Use a relative path
             File inputFile = new File("C:\\Users\\noaml\\IdeaProjects\\AIProject\\src\\alarm_net.xml");
-            if (!inputFile.exists()) {
+            if (!inputFile.exists())
+            {
                 throw new FileNotFoundException("File not found: " + inputFile.getAbsolutePath());
             }
 
@@ -24,15 +86,18 @@ class XMLReader {
             List<Variable> variables = new ArrayList<>();
             Map<String, Variable> variableMap = new HashMap<>();
 
-            for (int i = 0; i < variableList.getLength(); i++) {
+            for (int i = 0; i < variableList.getLength(); i++)
+            {
                 Node variableNode = variableList.item(i);
-                if (variableNode.getNodeType() == Node.ELEMENT_NODE) {
+                if (variableNode.getNodeType() == Node.ELEMENT_NODE)
+                {
                     Element variableElement = (Element) variableNode;
                     String name = variableElement.getElementsByTagName("NAME").item(0).getTextContent();
                     Variable variable = new Variable(name);
 
                     NodeList outcomeList = variableElement.getElementsByTagName("OUTCOME");
-                    for (int j = 0; j < outcomeList.getLength(); j++) {
+                    for (int j = 0; j < outcomeList.getLength(); j++)
+                    {
                         variable.addOutcome(outcomeList.item(j).getTextContent());
                     }
 
@@ -45,31 +110,39 @@ class XMLReader {
             List<Definition> definitions = new ArrayList<>();
             Map<String, Definition> definitionMap = new HashMap<>();
 
-            for (int i = 0; i < definitionList.getLength(); i++) {
+            for (int i = 0; i < definitionList.getLength(); i++)
+            {
                 Node definitionNode = definitionList.item(i);
-                if (definitionNode.getNodeType() == Node.ELEMENT_NODE) {
+                if (definitionNode.getNodeType() == Node.ELEMENT_NODE)
+                {
                     Element definitionElement = (Element) definitionNode;
                     String forVar = definitionElement.getElementsByTagName("FOR").item(0).getTextContent();
                     Definition definition = new Definition(forVar);
 
                     NodeList givenList = definitionElement.getElementsByTagName("GIVEN");
-                    for (int j = 0; j < givenList.getLength(); j++) {
+                    for (int j = 0; j < givenList.getLength(); j++)
+                    {
                         Variable v1 = null;
                         Variable v2 = null;
-                        for (Variable v : variables) {
-                            if (v.name.equals(forVar)) {
+                        for (Variable v : variables)
+                        {
+                            if (v.name.equals(forVar))
+                            {
                                 v1 = v;
                                 break;
                             }
                         }
-                        for (Variable v : variables) {
-                            if (v.name.equals(givenList.item(j).getTextContent())) {
+                        for (Variable v : variables)
+                        {
+                            if (v.name.equals(givenList.item(j).getTextContent()))
+                            {
                                 v2 = v;
                                 break;
                             }
                         }
 
-                        if (v1 != null && v2 != null) {
+                        if (v1 != null && v2 != null)
+                        {
                             definition.addGiven(givenList.item(j).getTextContent(), v1, v2);
                         }
                     }
@@ -82,97 +155,27 @@ class XMLReader {
                 }
             }
 
-            // Combine the variables and definitions into a joint probability table
-            Map<String, Double> jointProbabilityTable = calculateJointProbabilityTable(variables, definitions);
+            // Create a map to store the CPTs for each variable
+            Map<String, String[][]> cptMap = new HashMap<>();
 
-            // Print out the joint probability table for verification
-            for (Map.Entry<String, Double> entry : jointProbabilityTable.entrySet()) {
-                System.out.println(entry.getKey() + ": " + entry.getValue());
-                // + String.format("%.5f", entry.getValue())
+            // Process each definition and store the CPT in the map
+            for (Definition definition : definitions)
+            {
+                String[][] cptTable = createCPTTable(definition, variableMap);
+                cptMap.put(definition.forVar, cptTable);
             }
 
-//            // Print out variables and definitions for verification
-//            for (Variable variable : variables) {
-//                System.out.println(variable);
-//            }
-//
-//            for (Definition definition : definitions) {
-//                System.out.println(definition);
-//            }
+            // Example: print out the CPT table for each variable (for debugging purposes)
+            for (Map.Entry<String, String[][]> entry : cptMap.entrySet())
+            {
+                System.out.println("CPT for: " + entry.getKey());
+                printCPTTable(entry.getValue());
+                System.out.println();
+            }
 
-        } catch (Exception e) {
+        } catch (Exception e)
+        {
             e.printStackTrace();
         }
-    }
-
-    private static Map<String, Double> calculateJointProbabilityTable(List<Variable> variables, List<Definition> definitions) {
-        Map<String, Double> jointProbabilityTable = new LinkedHashMap<>();
-
-        // Base case for recursion - fill in the probabilities for leaf nodes (variables with no parents)
-        for (Definition def : definitions) {
-            if (def.givens.isEmpty()) {
-                Variable var = getVariableByName(variables, def.forVar);
-                for (int i = 0; i < var.outcomes.size(); i++) {
-                    String key = def.forVar + "=" + var.outcomes.get(i);
-                    jointProbabilityTable.put(key, def.probabilities.get(i));
-                }
-            }
-        }
-
-        // Recursive case - calculate joint probabilities for variables with parents
-        calculateJointProbabilities(variables, definitions, jointProbabilityTable, new LinkedHashMap<>(), 0);
-
-        return jointProbabilityTable;
-    }
-
-    private static void calculateJointProbabilities(List<Variable> variables, List<Definition> definitions,
-                                                    Map<String, Double> jointProbabilityTable, Map<String, String> currentAssignment, int index) {
-        if (index == variables.size()) {
-            double jointProb = 1.0;
-            for (Definition def : definitions) {
-                List<String> parentAssignments = new ArrayList<>();
-                for (String parent : def.givens) {
-                    parentAssignments.add(currentAssignment.get(parent));
-                }
-                String childAssignment = currentAssignment.get(def.forVar);
-                double prob = getProbability(def, parentAssignments, childAssignment);
-                jointProb *= prob;
-            }
-            String key = currentAssignment.toString();
-            jointProbabilityTable.put(key, jointProb);
-            return;
-        }
-
-        Variable var = variables.get(index);
-        for (String outcome : var.outcomes) {
-            currentAssignment.put(var.name, outcome);
-            calculateJointProbabilities(variables, definitions, jointProbabilityTable, currentAssignment, index + 1);
-        }
-    }
-
-    private static double getProbability(Definition def, List<String> parentAssignments, String childAssignment) {
-        int index = 0;
-        int multiplier = 1;
-        for (int i = parentAssignments.size() - 1; i >= 0; i--) {
-            String parentOutcome = parentAssignments.get(i);
-            if (parentOutcome.equals("T")) {
-                index += multiplier;
-            }
-            multiplier *= 2;
-        }
-        if (childAssignment.equals("T")) {
-            return def.probabilities.get(index);
-        } else {
-            return def.probabilities.get(index + 1);
-        }
-    }
-
-    private static Variable getVariableByName(List<Variable> variables, String name) {
-        for (Variable var : variables) {
-            if (var.name.equals(name)) {
-                return var;
-            }
-        }
-        return null;
     }
 }
