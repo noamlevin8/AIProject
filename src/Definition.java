@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
-class Definition {
+public class Definition {
     String forVar;
     List<String> givens = new ArrayList<>();
     List<Double> probabilities = new ArrayList<>();

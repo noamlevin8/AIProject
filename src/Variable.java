@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
-class Variable {
+public class Variable {
     String name;
     List<String> outcomes = new ArrayList<>();
     List<Variable> parents = new ArrayList<>();
