@@ -5,11 +5,9 @@ import java.util.*;
 
 public class XMLReader
 {
-    private static String[][] createCPTTable(Definition definition, Map<String, Variable> variableMap)
-    {
+    private static String[][] createCPTTable(Definition definition, Map<String, Variable> variableMap) {
         Variable variable = variableMap.get(definition.forVar);
-        if (variable == null)
-        {
+        if (variable == null) {
             return null;
         }
 
@@ -20,8 +18,7 @@ public class XMLReader
         String[][] table = new String[numGivenCombinations * numOutcomes + 1][definition.givens.size() + 2];
 
         // Fill in the header row
-        for (int j = 0; j < definition.givens.size(); j++)
-        {
+        for (int j = 0; j < definition.givens.size(); j++) {
             table[0][j] = definition.givens.get(j);
         }
 
@@ -29,24 +26,26 @@ public class XMLReader
         table[0][definition.givens.size() + 1] = "Probability";
 
         // Fill the table rows with the given combinations, outcomes, and probabilities
-        for (int i = 0; i < numGivenCombinations; i++)
-        {
-            for (int k = 0; k < numOutcomes; k++)
-            {
-                int row = i * numOutcomes + k + 1; // Adjust row index to account for header
+        int counter = variable.outcomes.size();
 
-                // Fill in the given variable values (Needs change)
-                for (int j = 0; j < definition.givens.size(); j++)
-                {
-                    int givenIndex = ((i / (int) Math.pow(definition.givens.size(), j)) % definition.givens.size());
-                    table[row][j] = variableMap.get(definition.givens.get(j)).outcomes.get(givenIndex);
-                }
+        // Set the variable values on the last column
+        for(int i = 1; i < numGivenCombinations * numOutcomes + 1; i++) {
+           table[i][definition.givens.size()] = variable.outcomes.get((i-1) % counter);
+        }
 
-                // Fill in the outcome and probability
-                table[row][definition.givens.size()] = variable.outcomes.get(k);
-                double prob = definition.probabilities.get(i * numOutcomes + k);
-                table[row][definition.givens.size() + 1] = String.format("%.5f", prob);
+        // Set the parents values
+        for(int j = definition.givens.size()-1; j >= 0; j--){
+            for(int i = 1; i < numGivenCombinations * numOutcomes + 1; i++) {
+                table[i][j] = variable.parents.get(j).outcomes.get(((i-1) / counter) % variable.parents.get(j).outcomes.size());
             }
+
+            counter *= variable.parents.get(j).outcomes.size();
+        }
+
+        // Set the probability
+        for(int i = 1; i < numGivenCombinations * numOutcomes + 1; i++) {
+            double prob = definition.probabilities.get(i-1);
+            table[i][definition.givens.size() + 1] = String.format("%.5f", prob);
         }
 
         return table;
@@ -171,10 +170,20 @@ public class XMLReader
                         evidence.add(variable);
                     }
                 }
+            } else {
+                for (int i = 0; i < rightPart.length() - 1; i++) {
+                    if (rightPart.charAt(i + 1) == '=') {
+                        for (Variable variable : variables) {
+                            if (variable.name.charAt(0) == rightPart.charAt(i)) {
+                                evidence.add(variable);
+                            }
+                        }
+                    }
+                }
             }
         }
     }
-    public static void main(String[] args) throws IOException
+    public static void main(String[] args)
     {
         try
         {
@@ -286,7 +295,7 @@ public class XMLReader
 
 
             BufferedReader file = new BufferedReader(new FileReader("C:\\Users\\noaml\\IdeaProjects\\AIProject\\src\\input1.txt"));
-            String xmlName = file.readLine();
+            String xmlName = file.readLine(); // To extract the name in order to move to the real data
 
             FileWriter myWriter = new FileWriter("C:\\Users\\noaml\\IdeaProjects\\AIProject\\src\\output1.txt");
 
@@ -304,7 +313,7 @@ public class XMLReader
 
                     System.out.println("Start: " + isIn.get(1));
                     System.out.println("End: " + isIn.get(0));
-                    System.out.println("Evidence: " + evidence + "");
+                    System.out.println("Evidence: " + evidence);
 
                     BayesBall bayesBallInstance = new BayesBall();
                     if(bayesBallInstance.bayesBall(variables,isIn.get(1),isIn.get(0),evidence)) {

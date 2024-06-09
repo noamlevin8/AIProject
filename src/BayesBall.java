@@ -1,6 +1,5 @@
-import java.io.*;
 import java.util.ArrayList;
-import java.util.Set;
+
 public class BayesBall {
     public boolean bayesBall(ArrayList<Variable> v1,Variable start,Variable end, ArrayList<Variable> evidence) {
         ArrayList<Variable> visited=new ArrayList<>();
@@ -17,8 +16,8 @@ public class BayesBall {
 
         else if(evidence.contains(start)){
             for(int i=0;i<start.parents.size();i++) {
-                comingFromChild=true;
-                if (!visited.contains(start.parents.get(i)) || comingFromChild)
+                //comingFromChild=true;
+                //if (!visited.contains(start.parents.get(i)) || comingFromChild)
                     if (!areIndependent(start.parents.get(i), end, visited, true, evidence))
                         return false;
             }
