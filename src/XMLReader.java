@@ -286,10 +286,11 @@ public class XMLReader
             }
 
             // Example: print out the CPT table for each variable (for debugging purposes)
-            for (Map.Entry<String, String[][]> entry : cptMap.entrySet())
+            for (Variable variable : variables)
             {
-                System.out.println("CPT for: " + entry.getKey());
-                printCPTTable(entry.getValue());
+                variable.addCPT(cptMap.get(variable.name));
+                System.out.println("CPT for: " + variable.name);
+                printCPTTable(variable.cpt);
                 System.out.println();
             }
 

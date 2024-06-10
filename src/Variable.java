@@ -6,6 +6,7 @@ public class Variable {
     List<String> outcomes = new ArrayList<>();
     List<Variable> parents = new ArrayList<>();
     List<Variable> children = new ArrayList<>();
+    String[][] cpt;
 
 
     Variable(String name) {
@@ -21,6 +22,7 @@ public class Variable {
     void addChildren(Variable child) {
         children.add(child);
     }
+    void addCPT(String[][] cpt) {this.cpt = cpt;}
 
     @Override
     public String toString() {
