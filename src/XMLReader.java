@@ -348,6 +348,21 @@ public class XMLReader
                 System.out.println(line2);
             }
 
+//            VariableElimination.deleteEvidence(variableMap.get("A"), "F", cptMap);
+//
+//            System.out.println("\nAfter delete:");
+//            for (Factor factor : VariableElimination.factors)
+//            {
+//                System.out.print("Factor for: ");
+//                for(String variable : factor.vars)
+//                    System.out.print(variable + " ");
+//                System.out.print("\n");
+//                printCPTTable(factor.table);
+//                System.out.println();
+//            }
+
+
+
         } catch (Exception e)
         {
             e.printStackTrace();
