@@ -63,7 +63,7 @@ public class XMLReader
         }
     }
 
-    private static void extract_for_elimination(ArrayList<Variable> isIn, ArrayList<Variable> evidence, ArrayList<Variable> order, ArrayList<Variable> variables, String line) {
+    private static void extract_for_elimination(ArrayList<Variable> isIn, ArrayList<Variable> evidence, ArrayList<Variable> order, ArrayList<Variable> variables, String line,ArrayList<String> evidenceOutcome,ArrayList<String> queryOutcome) {
         String[] parts = line.split(" ");
         String probabilityPart = parts[0];
         String orderPart = parts[1];
@@ -89,6 +89,7 @@ public class XMLReader
                     break;
                 }
             }
+            queryOutcome.add(nameValue[1]);
         }
 
 
@@ -100,6 +101,7 @@ public class XMLReader
             for(Variable variable : variables){
                 if(variable.name.equals(nameValue[0])){
                     evidence.add(variable);
+                    evidenceOutcome.add(nameValue[1]);
                     break;
                 }
             }
@@ -317,7 +319,7 @@ public class XMLReader
                     System.out.println("Evidence: " + evidence);
 
                     BayesBall bayesBallInstance = new BayesBall();
-                    if(bayesBallInstance.bayesBall(variables,isIn.get(1),isIn.get(0),evidence)) {
+                    if(bayesBallInstance.bayesBall(isIn.get(1),isIn.get(0),evidence)) {
                         System.out.println(isIn.get(1).name + " and " + isIn.get(0).name + " are independent\n");
                         myWriter.write("yes\n");
                     }
@@ -328,15 +330,16 @@ public class XMLReader
                 }
                 else{
                     System.out.println("Variable Elimination:");
-//                    ArrayList<Variable> evidence = new ArrayList<>();
-//                    ArrayList<Variable> isIn = new ArrayList<>();
-//                    ArrayList<Variable> order = new ArrayList<>();
-//                    extract_for_elimination(isIn,evidence,order,variables,line);
+                    ArrayList<Variable> evidence = new ArrayList<>();
+                    ArrayList<String> evidenceOutcome = new ArrayList<>();
+                    ArrayList<Variable> isIn = new ArrayList<>();
+                    ArrayList<Variable> order = new ArrayList<>();
+                    ArrayList<String> queryOutcome = new ArrayList<>();
+                    extract_for_elimination(isIn,evidence,order,variables,line,evidenceOutcome,queryOutcome);
 //                    System.out.println("Start: " + isIn.get(0).name);
 //                    System.out.println("evidence: " + evidence);
 //                    System.out.println("order: " + order);
-//                    VariableElimination variableEliminationInstance = new VariableElimination();
-//                    variableEliminationInstance.variableElimination(isIn.get(0),variables,order,evidence);
+                    VariableElimination variableEliminationInstance = new VariableElimination(isIn.get(0),variableMap,order,evidence,evidenceOutcome,myWriter,queryOutcome, cptMap);
                 }
             }
 
@@ -348,7 +351,10 @@ public class XMLReader
                 System.out.println(line2);
             }
 
-//            VariableElimination.deleteEvidence(variableMap.get("A"), "F", cptMap);
+            //VariableElimination.deleteEvidence(variableMap.get("A"), "F", cptMap);
+//            ArrayList<Variable> evidence = new ArrayList<>();
+//            evidence.add(variableMap.get("A"));
+//            VariableElimination ve = new VariableElimination(variableMap.get("J"), variableMap, null, evidence, null, myWriter,null, cptMap);
 //
 //            System.out.println("\nAfter delete:");
 //            for (Factor factor : VariableElimination.factors)

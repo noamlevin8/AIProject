@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 
 public class BayesBall {
-    public boolean bayesBall(ArrayList<Variable> v1,Variable start,Variable end, ArrayList<Variable> evidence) {
+    public boolean bayesBall(Variable start,Variable end, ArrayList<Variable> evidence) {
         ArrayList<Variable> visited=new ArrayList<>();
         return areIndependent(start,end,visited,false,evidence);
     }
