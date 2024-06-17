@@ -76,19 +76,29 @@ public class VariableElimination {
             deleteEvidence(evidence.get(i), outcome.get(i), factorMap);
         }
 
+        System.out.println("Before factor eli: ");
+        for(Factor f : factors){
+            f.printFactor();
+        }
+        ArrayList<Factor> remove = new ArrayList<>();
+
         for(int i = 0; i < factors.size(); i++){
-//            System.out.println("Test factor elimination:");
-//            factors.get(i).printFactor();
+            System.out.println("Test factor elimination:");
+            factors.get(i).printFactor();
             for(Variable evi : evidence) {
-//                System.out.println("Evi - " + evi.name);
+                System.out.println("Evi - " + evi.name);
                 if (factors.get(i).vars.contains(evi.name)) {
-//                    System.out.println("Yes");
-                    factors.remove(factors.get(i));
+                    System.out.println("Yes");
+                    remove.add(factors.get(i));
+                    //factors.remove(factors.get(i));
                 }
-//                else
-//                    System.out.println("No");
+                else
+                    System.out.println("No");
             }
         }
+
+        factors.removeAll(remove);
+
         //deleteEvidence(variablesMap.get("A"), "F", factorMap);
 
         System.out.println("after delete");
@@ -145,7 +155,15 @@ public class VariableElimination {
             newFactors.remove(newFactor);
 //            System.out.println("Size new: " + newFactors.size());
             for (Factor factor : newFactors) {
+                System.out.println("I multipy:");
+                newFactor.printFactor();
+                System.out.println("with:");
+                factor.printFactor();
                 numMultiply += newFactor.multiply(factor);
+//                index++;
+//                System.out.println(index+":");
+                System.out.println("and i get this:");
+                newFactor.printFactor();
             }
             numAdds += newFactor.sumUp(ord);
 //            System.out.println("print new factor: ");
@@ -160,6 +178,8 @@ public class VariableElimination {
             numMultiply += newFactor.multiply(fr);
 //        Factor newFactor = factors.get(0);
 //        numAdds+= newFactor.marginalize();
+        System.out.println("Before norm: ");
+        newFactor.printFactor();
         numAdds+=newFactor.normalize();
         newFactor.printFactor();
 
