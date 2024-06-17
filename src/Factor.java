@@ -39,7 +39,7 @@ public class Factor {
 
         // Initialize a new table to hold multiplied values
         String[][] newTable = new String[newTableSize+1][newVariables.size() + 1];
-        System.out.println("Table size: rows - " + newTable.length + " columns - " + newTable[0].length);
+       // System.out.println("Table size: rows - " + newTable.length + " columns - " + newTable[0].length);
 
         // Populate the header row of the new table with variable names and "pro" for probability
         for (int j = 0; j < newVariables.size(); j++) {
@@ -101,11 +101,11 @@ public class Factor {
 
         for(int j = 0; j < this.table[0].length-1; j++)
         {
-            System.out.println("Var name: " + this.table[0][j]);
+            //System.out.println("Var name: " + this.table[0][j]);
             this.vars.add(this.table[0][j]);
         }
-        System.out.println("Vars size: " + this.vars.size());
-        this.printFactor();
+//        System.out.println("Vars size: " + this.vars.size());
+//        this.printFactor();
 
         return numMultiplies;
     }
