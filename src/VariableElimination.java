@@ -24,12 +24,12 @@ public class VariableElimination {
         toAddStart(toAdd, start);
         BayesBall ball = new BayesBall();
 
-        for (Variable v : evidence) {
-            toAddStart(toAdd, v);
-        }
-        for (Variable v : order) {
-            toAddStart(toAdd, v);
-        }
+//        for (Variable v : evidence) {
+//            toAddStart(toAdd, v);
+//        }
+//        for (Variable v : order) {
+//            toAddStart(toAdd, v);
+//        }
 
         removeIndependentVariables(toAdd,start,ball,evidence);
 
@@ -46,6 +46,9 @@ public class VariableElimination {
             factorMap.put(s, f);
             //factors.add(new Factor(v.cpt));
         }
+
+        if(checkForBuiltIn(factorMap, evidence, start, outcome, queryOutcome, myWriter))
+            return;
 
         //deleteEvidence(variablesMap.get("A"), "F", factorMap);
 
@@ -100,6 +103,12 @@ public class VariableElimination {
         }
 
         factors.removeAll(remove);
+
+        for (Factor factor : factors) {
+            if(factor.vars.size()==1 && evidence.contains(VariableElimination.variablesMap.get(factor.vars.get(0)))){
+                factors.remove(factor);
+            }
+        }
 
         //deleteEvidence(variablesMap.get("A"), "F", factorMap);
 
@@ -286,4 +295,68 @@ public class VariableElimination {
             }
         });
     }
+
+    private boolean checkForBuiltIn(Map<String, Factor> factorMap, ArrayList<Variable> evidence, Variable start, ArrayList<String> outcome, ArrayList<String> queryOutcome, FileWriter myWriter) throws IOException {
+        double probability = 0;
+        boolean flag = true;
+
+        for (Map.Entry<String, Factor> entry : factorMap.entrySet()) {
+            if (entry.getValue().vars.contains(start.name)) {
+                // Check if all evidence variables are contained in this factor
+                for (Variable v : evidence) {
+                    if (!entry.getValue().vars.contains(v.name)) {
+                        flag = false;
+                        break;
+                    }
+                }
+
+                if (flag) {
+                    String[][] table = entry.getValue().table;
+
+                    // Iterate through each row in the table
+                    for (int i = 1; i < table.length; i++) {
+                        String[] row = table[i];
+                        boolean match = true;
+
+                        // Check if the row matches the evidence and query outcomes
+                        for (int j = 0; j < entry.getValue().vars.size(); j++) {
+                            Variable var = VariableElimination.variablesMap.get(entry.getValue().vars.get(j));
+
+                            // Check against evidence
+                            if (evidence.contains(var)) {
+                                int evidenceIndex = evidence.indexOf(var);
+                                if (!row[j].equals(outcome.get(evidenceIndex))) {
+                                    match = false;
+                                    break;
+                                }
+                            }
+
+                            // Check against query outcome
+                            if (var.equals(start)) {
+                                int queryIndex = entry.getValue().vars.indexOf(start.name);
+                                if (!row[queryIndex].equals(queryOutcome.get(0))) {
+                                    match = false;
+                                    break;
+                                }
+                            }
+                        }
+
+                        // If row matches both evidence and query outcomes, add its probability
+                        if (match) {
+                            probability += Double.parseDouble(row[row.length - 1]);
+                        }
+                    }
+
+                    // Write the probability to the file
+                    if (probability > 0) {
+                        myWriter.write(probability+",0,0");
+                        myWriter.write("\n");
+                        return true; // If found, return true
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
 }
