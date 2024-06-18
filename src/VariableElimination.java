@@ -36,6 +36,7 @@ public class VariableElimination {
         for (Variable v : toAdd) {
             System.out.println("name: " + v.name);
         }
+        System.out.println();
 
         for (Variable v : toAdd) {
             Factor f = new Factor(v.cpt);
@@ -50,11 +51,11 @@ public class VariableElimination {
 
 
 
-        System.out.println("\nbefore delete");
-        for (Map.Entry<String, Factor> entry : factorMap.entrySet()) {
-            //System.out.println("Factor for: " + entry.getKey());
-            entry.getValue().printFactor();
-        }
+//        System.out.println("\nbefore delete");
+//        for (Map.Entry<String, Factor> entry : factorMap.entrySet()) {
+//            //System.out.println("Factor for: " + entry.getKey());
+//            entry.getValue().printFactor();
+//        }
 
 //        for (int i = 0; i < evidence.size(); i++) {
 //            Variable evi = evidence.get(i);
@@ -75,25 +76,26 @@ public class VariableElimination {
             System.out.println("Evidence - " + evidence.get(i).name + " with value - " + outcome.get(i));
             deleteEvidence(evidence.get(i), outcome.get(i), factorMap);
         }
+        System.out.println();
 
-        System.out.println("Before factor eli: ");
-        for(Factor f : factors){
-            f.printFactor();
-        }
+//        System.out.println("Before factor eli: ");
+//        for(Factor f : factors){
+//            f.printFactor();
+//        }
         ArrayList<Factor> remove = new ArrayList<>();
 
         for(int i = 0; i < factors.size(); i++){
-            System.out.println("Test factor elimination:");
-            factors.get(i).printFactor();
+//            System.out.println("Test factor elimination:");
+//            factors.get(i).printFactor();
             for(Variable evi : evidence) {
-                System.out.println("Evi - " + evi.name);
+//                System.out.println("Evi - " + evi.name);
                 if (factors.get(i).vars.contains(evi.name)) {
-                    System.out.println("Yes");
+//                    System.out.println("Yes");
                     remove.add(factors.get(i));
                     //factors.remove(factors.get(i));
                 }
-                else
-                    System.out.println("No");
+//                else
+//                    System.out.println("No");
             }
         }
 
@@ -101,25 +103,25 @@ public class VariableElimination {
 
         //deleteEvidence(variablesMap.get("A"), "F", factorMap);
 
-        System.out.println("after delete");
-        for (Factor factor : factors) {
-            factor.printFactor();
+//        System.out.println("after delete");
+//        for (Factor factor : factors) {
+//            factor.printFactor();
 //            System.out.print("Vars - ");
 //            for(String str : factor.vars){
 //                System.out.print(str + " ");
 //            }
 //            System.out.println();
-        }
+//        }
 
 //        for (Variable v : order) {
 //            factors.add(new Factor(v));
 //        }
 
-        System.out.print("Order - ");
-        for (Variable ord : order) {
-            System.out.print(ord.name + " ");
-        }
-        System.out.println();
+//        System.out.print("Order - ");
+//        for (Variable ord : order) {
+//            System.out.print(ord.name + " ");
+//        }
+//        System.out.println();
 
         //System.out.println("size factors: " + factors.size());
 
@@ -150,20 +152,20 @@ public class VariableElimination {
 //            System.out.println("Num of fac: " + factors.size());
 
             Factor newFactor = newFactors.get(0);
-            System.out.println("print new factor: ");
-            newFactor.printFactor();
+//            System.out.println("print new factor: ");
+//            newFactor.printFactor();
             newFactors.remove(newFactor);
 //            System.out.println("Size new: " + newFactors.size());
             for (Factor factor : newFactors) {
-                System.out.println("I multipy:");
-                newFactor.printFactor();
-                System.out.println("with:");
-                factor.printFactor();
+//                System.out.println("I multipy:");
+//                newFactor.printFactor();
+//                System.out.println("with:");
+//                factor.printFactor();
                 numMultiply += newFactor.multiply(factor);
 //                index++;
 //                System.out.println(index+":");
-                System.out.println("and i get this:");
-                newFactor.printFactor();
+//                System.out.println("and i get this:");
+//                newFactor.printFactor();
             }
             numAdds += newFactor.sumUp(ord);
 //            System.out.println("print new factor: ");
@@ -173,20 +175,23 @@ public class VariableElimination {
 
         Factor newFactor=factors.get(0);
         factors.remove(newFactor);
-        System.out.println("Size at the end - " + factors.size());
+//        System.out.println("Size at the end - " + factors.size());
         for(Factor fr: factors)
             numMultiply += newFactor.multiply(fr);
 //        Factor newFactor = factors.get(0);
 //        numAdds+= newFactor.marginalize();
-        System.out.println("Before norm: ");
-        newFactor.printFactor();
+//        System.out.println("Before norm: ");
+//        newFactor.printFactor();
         numAdds+=newFactor.normalize();
+        System.out.println("Final factor:");
         newFactor.printFactor();
 
-        int index=start.outcomes.indexOf(queryOutcome.get(0));
-        probability = Double.parseDouble(newFactor.table[index+1][newFactor.table[0].length - 1]);
-        myWriter.write(probability + "," + numAdds + "," + numMultiply + "\n");
-        System.out.println("finish");
+        int index1=start.outcomes.indexOf(queryOutcome.get(0));
+        probability = Double.parseDouble(newFactor.table[index1+1][newFactor.table[0].length - 1]);
+        String roundedNumber = String.format("%.5f", probability);
+        myWriter.write(roundedNumber + "," + numAdds + "," + numMultiply + "\n");
+        System.out.print("Finish\n");
+        factors.clear();
     }
 
     public static void deleteEvidence(Variable evidence, String value, Map<String, Factor> cpt) {

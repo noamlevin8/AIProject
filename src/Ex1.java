@@ -3,7 +3,7 @@ import javax.xml.parsers.*;
 import java.io.*;
 import java.util.*;
 
-public class XMLReader
+public class Ex1
 {
     private static String[][] createCPTTable(Definition definition, Map<String, Variable> variableMap) {
         Variable variable = variableMap.get(definition.forVar);
@@ -45,7 +45,7 @@ public class XMLReader
         // Set the probability
         for(int i = 1; i < numGivenCombinations * numOutcomes + 1; i++) {
             double prob = definition.probabilities.get(i-1);
-            table[i][definition.givens.size() + 1] = String.format("%.5f", prob);
+            table[i][definition.givens.size() + 1] = String.format(String.valueOf(prob));
         }
 
         return table;
@@ -189,11 +189,17 @@ public class XMLReader
     {
         try
         {
+            BufferedReader file = new BufferedReader(new FileReader("input.txt"));
+            String xmlName=file.readLine();
+
+            FileWriter myWriter = new FileWriter("output.txt");
+
+
             // Print the current working directory
             System.out.println("Current working directory: " + new File(".").getAbsolutePath());
 
             // Use a relative path
-            File inputFile = new File("C:\\Users\\noaml\\IdeaProjects\\AIProject\\src\\alarm_net.xml");
+            File inputFile = new File(xmlName);
             if (!inputFile.exists())
             {
                 throw new FileNotFoundException("File not found: " + inputFile.getAbsolutePath());
@@ -291,16 +297,16 @@ public class XMLReader
             for (Variable variable : variables)
             {
                 variable.addCPT(cptMap.get(variable.name));
-                System.out.println("CPT for: " + variable.name);
-                printCPTTable(variable.cpt);
-                System.out.println();
+//                System.out.println("CPT for: " + variable.name);
+//                printCPTTable(variable.cpt);
+//                System.out.println();
             }
 
 
-            BufferedReader file = new BufferedReader(new FileReader("C:\\Users\\noaml\\IdeaProjects\\AIProject\\src\\input1.txt"));
-            String xmlName = file.readLine(); // To extract the name in order to move to the real data
-
-            FileWriter myWriter = new FileWriter("C:\\Users\\noaml\\IdeaProjects\\AIProject\\src\\output1.txt");
+//            BufferedReader file = new BufferedReader(new FileReader("input.txt"));
+//            String xmlName = file.readLine(); // To extract the name in order to move to the real data
+//
+//            FileWriter myWriter = new FileWriter("output.txt");
 
 //            for(int i = 0; i < variables.size(); i++)
 //                System.out.println(variables.get(i));
@@ -329,7 +335,7 @@ public class XMLReader
                     }
                 }
                 else{
-                    System.out.println("Variable Elimination:");
+                    System.out.println("\nVariable Elimination:");
                     ArrayList<Variable> evidence = new ArrayList<>();
                     ArrayList<String> evidenceOutcome = new ArrayList<>();
                     ArrayList<Variable> isIn = new ArrayList<>();
@@ -339,13 +345,14 @@ public class XMLReader
 //                    System.out.println("Start: " + isIn.get(0).name);
 //                    System.out.println("evidence: " + evidence);
 //                    System.out.println("order: " + order);
+//                    System.out.println("Evidence outcome - " + evidenceOutcome);
                     VariableElimination variableEliminationInstance = new VariableElimination(isIn.get(0),variableMap,order,evidence,evidenceOutcome,myWriter,queryOutcome, cptMap);
                 }
             }
 
             String line2;
             myWriter.close();
-            BufferedReader file2 = new BufferedReader(new FileReader("C:\\Users\\noaml\\IdeaProjects\\AIProject\\src\\output1.txt"));
+            BufferedReader file2 = new BufferedReader(new FileReader("output.txt"));
             System.out.println();
             while ((line2 = file2.readLine()) != null){
                 System.out.println(line2);
