@@ -8,43 +8,34 @@ import java.util.Map;
 public class VariableElimination {
     public static ArrayList<Factor> factors = new ArrayList<>();
     public static Map<String, Variable> variablesMap;
+
+    // The main function for the Variable Elimination
     public VariableElimination(Variable start, Map<String, Variable> variables, ArrayList<Variable> order, ArrayList<Variable> evidence, ArrayList<String> outcome, FileWriter myWriter, ArrayList<String> queryOutcome) throws IOException {
         variablesMap = variables;
         Map<String, Factor> factorMap = new HashMap<>();
 
         int numAdds = 0, numMultiply = 0;
         double probability = 0;
-        ArrayList<Variable> toAdd = new ArrayList<>();
+        ArrayList<Variable> relevant = new ArrayList<>();
 
-        toAddStart(toAdd, start);
+        // Getting the relevant variables
+        relevantStart(relevant, start);
+
         for (Variable v : evidence)
-            toAddStart(toAdd,v);
+            relevantStart(relevant,v);
+
         BayesBall ball = new BayesBall();
 
-        removeIndependentVariables(toAdd,start,ball,evidence);
+        removeIndependentVariables(relevant,start,ball,evidence);
 
-//        for (Map.Entry<String, Variable> entry : variables.entrySet()) {
-//            toAdd.add(entry.getValue());
-//        }
-//
-//        toAddStart(toAdd, start);
-//        BayesBall ball = new BayesBall();
-//
-////        for (Variable v : evidence) {
-////            toAddStart(toAdd, v);
-////        }
-////        for (Variable v : order) {
-////            toAddStart(toAdd, v);
-////        }
-//
-//        removeIndependentVariables(toAdd,start,ball,evidence);
-
-        for (Variable v : toAdd) {
+        // Printing all the relevant variables for the query
+        for (Variable v : relevant) {
             System.out.println("name: " + v.name);
         }
         System.out.println();
 
-        for (Variable v : toAdd) {
+        // Inserting all the relevant CPT'S to the factor map
+        for (Variable v : relevant) {
             Factor f = new Factor(v.cpt);
             String s = "";
             for(String n : f.vars)
@@ -52,10 +43,11 @@ public class VariableElimination {
             factorMap.put(s, f);
         }
 
+        // Checking if we can get the answer from the initial CPT'S
         if(checkForBuiltIn(factorMap, evidence, start, outcome, queryOutcome, myWriter))
             return;
 
-
+        // If we don't have any evidence we add all the CPT'S to the factor list
         if(evidence.isEmpty()){
             for (Map.Entry<String, Factor> entry : factorMap.entrySet())
             {
@@ -63,6 +55,7 @@ public class VariableElimination {
             }
         }
 
+        // Evidence deletion
         else {
             for (int i = 0; i < evidence.size(); i++) {
                 System.out.println("Evidence - " + evidence.get(i).name + " with value - " + outcome.get(i));
@@ -73,6 +66,7 @@ public class VariableElimination {
 
         ArrayList<Factor> remove = new ArrayList<>();
 
+        // Checking if we still have a factor with evidence and then removing it
         for (Factor value : factors) {
             for (Variable evi : evidence) {
                 if (value.vars.contains(evi.name)) {
@@ -80,43 +74,48 @@ public class VariableElimination {
                 }
             }
         }
-
         factors.removeAll(remove);
 
+        // Eliminating by the given order
         for (Variable ord : order) {
-            if (!toAdd.contains(ord)) {
+            if (!relevant.contains(ord)) {
                 continue;
             }
 
             ArrayList<Factor> newFactors = new ArrayList<>();
+
             for (Factor factor : factors) {
                 if (!factor.vars.isEmpty() && factor.vars.contains(ord.name)) {
                     newFactors.add(factor);
                 }
             }
+
+            // Sorting the factors in order to do the elimination in the right order by means of size
             sortFactors(newFactors);
             factors.removeAll(newFactors);
 
             Factor newFactor = newFactors.get(0);
             newFactors.remove(newFactor);
+
             for (Factor factor : newFactors) {
                 numMultiply += newFactor.multiply(factor);
             }
-            numAdds += newFactor.sumUp(ord);
+
+            numAdds += newFactor.Merging(ord);
             factors.add(newFactor);
         }
 
-        Factor newFactor=factors.get(0);
+        Factor newFactor = factors.get(0);
         factors.remove(newFactor);
 
         for(Factor fr: factors)
             numMultiply += newFactor.multiply(fr);
 
-        numAdds+=newFactor.normalize();
+        numAdds += newFactor.normalize();
         System.out.println("Final factor:");
         newFactor.printFactor();
 
-        int index1=start.outcomes.indexOf(queryOutcome.get(0));
+        int index1 = start.outcomes.indexOf(queryOutcome.get(0));
         probability = Double.parseDouble(newFactor.table[index1+1][newFactor.table[0].length - 1]);
         String roundedNumber = String.format("%.5f", probability);
         myWriter.write(roundedNumber + "," + numAdds + "," + numMultiply + "\n");
@@ -124,11 +123,13 @@ public class VariableElimination {
         factors.clear();
     }
 
+    // Delete the evidence from all the CPT'S
     public static void deleteEvidence(Variable evidence, String value, Map<String, Factor> cpt) {
 
         for (Map.Entry<String, Factor> entry : cpt.entrySet())
         {
             boolean added = false;
+
             for(int j = 0; j < entry.getValue().table[0].length-1; j++)
             {
                 if(entry.getValue().table[0][j].equals(evidence.name))
@@ -148,6 +149,7 @@ public class VariableElimination {
                         }
                     }
 
+                    // Rest of the table
                     for(int n = 1; n < entry.getValue().table.length; n++)
                     {
                         if(entry.getValue().table[n][j].equals(value))
@@ -164,6 +166,7 @@ public class VariableElimination {
                             index2 = 0;
                         }
                     }
+
                     Factor f = new Factor(newFactor);
                     VariableElimination.factors.add(f);
                     added = true;
@@ -176,20 +179,24 @@ public class VariableElimination {
         }
     }
 
-    private static void toAddStart(ArrayList<Variable> toAdd, Variable start) {
-        if (toAdd.contains(start)) {
+    // Adding to a list all the relevant variables
+    private static void relevantStart(ArrayList<Variable> relevant, Variable start) {
+        if (relevant.contains(start)) {
             return;
         }
-        toAdd.add(start);
+
+        relevant.add(start);
         for (Variable parent : start.parents) {
-            toAddStart(toAdd, parent);
+            relevantStart(relevant, parent);
         }
     }
 
+    // Removing independent variables
     private static void removeIndependentVariables(ArrayList<Variable> toRemove, Variable start, BayesBall ball, ArrayList<Variable> evidence) {
         toRemove.removeIf(v -> ball.bayesBall(v, start, evidence));
     }
 
+    // Sort factors by size
     private static void sortFactors(ArrayList<Factor> factors) {
         factors.sort(new Comparator<Factor>() {
             @Override
@@ -199,18 +206,18 @@ public class VariableElimination {
         });
     }
 
+    // Checking if we can return the answer from the initial CPT'S
     private boolean checkForBuiltIn(Map<String, Factor> factorMap, ArrayList<Variable> evidence, Variable start, ArrayList<String> outcome, ArrayList<String> queryOutcome, FileWriter myWriter) throws IOException {
 
         double probability = -1;
-        boolean flag = true;
+        boolean flag = true; // For checking evidence
         int count = 0;
 
 
         for (Map.Entry<String, Factor> entry : factorMap.entrySet()) {
             if (entry.getValue().vars.contains(start.name)) {
-//                entry.getValue().printFactor();
-                // Check if all evidence variables are contained in this factor
 
+                // Check that we look at a table that represent our query in the right way
                 for(int j = 0; j < entry.getValue().table[0].length - 1; j++){
                     if(evidence.contains(VariableElimination.variablesMap.get(entry.getValue().table[0][j]))){
                         count++;
@@ -219,8 +226,9 @@ public class VariableElimination {
                         break;
                 }
 
+                // Not current table
                 if (count != evidence.size())
-                    return false;
+                    break;
 
                 for (Variable v : evidence) {
                     if (!entry.getValue().vars.contains(v.name)) {
@@ -230,10 +238,10 @@ public class VariableElimination {
                 }
 
                 if (flag) {
-                    boolean fl=true;
+                    boolean fl = true; // For checking the start
                     for (String v : entry.getValue().vars) {
                         if(!v.equals(start.name) && !evidence.contains(VariableElimination.variablesMap.get(v))){
-                            fl=false;
+                            fl = false;
                             break;
                         }
                     }
@@ -243,16 +251,16 @@ public class VariableElimination {
 
                     String[][] table = entry.getValue().table;
 
-                    // Iterate through each row in the table
+                    // Iterating through each row in the table
                     for (int i = 1; i < table.length; i++) {
                         String[] row = table[i];
-                        boolean match = true;
+                        boolean match = true; // For checking if we found the value
 
                         // Check if the row matches the evidence and query outcomes
                         for (int j = 0; j < entry.getValue().vars.size(); j++) {
                             Variable var = VariableElimination.variablesMap.get(entry.getValue().vars.get(j));
 
-                            // Check against evidence
+                            // Check evidence
                             if (evidence.contains(var)) {
                                 int evidenceIndex = evidence.indexOf(var);
                                 if (!row[j].equals(outcome.get(evidenceIndex))) {
@@ -261,7 +269,7 @@ public class VariableElimination {
                                 }
                             }
 
-                            // Check against query outcome
+                            // Check query outcome
                             if (var.equals(start)) {
                                 int queryIndex = entry.getValue().vars.indexOf(start.name);
                                 if (!row[queryIndex].equals(queryOutcome.get(0))) {

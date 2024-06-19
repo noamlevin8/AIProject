@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class Variable {
     String name;
     List<String> outcomes = new ArrayList<>();

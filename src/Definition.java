@@ -1,6 +1,8 @@
 import java.util.ArrayList;
 import java.util.List;
 
+
+// Helping to create the CPT'S
 public class Definition {
     String forVar;
     List<String> givens = new ArrayList<>();

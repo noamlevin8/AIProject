@@ -3,8 +3,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class Factor {
-    ArrayList<String> vars = new ArrayList<>();
-    String[][] table;
+    ArrayList<String> vars = new ArrayList<>(); // The names of the variables that are in the factor
+    String[][] table; // The actual factor
 
     public Factor(String[][] t){
         this.table = t;
@@ -16,42 +16,45 @@ public class Factor {
     }
 
     public int multiply(Factor other) {
-        if(other.vars.size()>this.vars.size()){
-            return this.multiply2(other);
+        // Checking whether we should do the multiplication in the other
+        // order based on the number of variables in each factor
+        if(other.vars.size() > this.vars.size()){
+            return this.SecondMultiply(other);
         }
 
         int numMultiplies = 0;
 
         ArrayList<Variable> newVariables = new ArrayList<>();
 
-        for(int i=0;i<this.table[0].length-1;i++){
-            String str=this.table[0][i];
-            for(String var: this.vars){
+        for(int i=0; i < this.table[0].length-1; i++){
+            String str = this.table[0][i];
+            for(String var : this.vars){
                 if(str.equals(var))
                     newVariables.add(VariableElimination.variablesMap.get(var));
             }
         }
+
         for (String var : other.vars) {
             if (!newVariables.contains(VariableElimination.variablesMap.get(var))) {
                 newVariables.add(VariableElimination.variablesMap.get(var));
             }
         }
 
-        ArrayList<Variable> lolOther=new ArrayList<>();
-        for(int i=0;i<other.table[0].length-1;i++){
-            String str=other.table[0][i];
-            for(String var: other.vars){
+        ArrayList<Variable> OtherVars = new ArrayList<>();
+        for(int i=0; i < other.table[0].length-1; i++){
+            String str = other.table[0][i];
+            for(String var : other.vars){
                 if(str.equals(var))
-                    lolOther.add(VariableElimination.variablesMap.get(var));
+                    OtherVars.add(VariableElimination.variablesMap.get(var));
             }
         }
 
-        ArrayList<Variable> lolThis=new ArrayList<>();
-        for(int i=0;i<this.table[0].length-1;i++){
-            String str=this.table[0][i];
-            for(String var: this.vars){
+        ArrayList<Variable> ThisVars = new ArrayList<>();
+        for(int i=0; i < this.table[0].length-1; i++){
+            String str = this.table[0][i];
+            for(String var : this.vars){
                 if(str.equals(var))
-                    lolThis.add(VariableElimination.variablesMap.get(var));
+                    ThisVars.add(VariableElimination.variablesMap.get(var));
             }
         }
 
@@ -91,8 +94,8 @@ public class Factor {
                 // Check if the current rows can be multiplied (consistent assignments for common variables)
                 boolean consistent = true;
                 for (Variable var : commonVariables) {
-                    int thisIndex = lolThis.indexOf(var);
-                    int otherIndex = lolOther.indexOf(var);
+                    int thisIndex = ThisVars.indexOf(var);
+                    int otherIndex = OtherVars.indexOf(var);
                     if (!thisLine[thisIndex].equals(otherLine[otherIndex])) {
                         consistent = false;
                         break;
@@ -107,9 +110,9 @@ public class Factor {
                     for (int k = 0; k < newVariables.size(); k++) {
                         Variable newVar = newVariables.get(k);
                         if (this.vars.contains(newVar.name)) {
-                            newRow[k] = thisLine[lolThis.indexOf(newVar)];
+                            newRow[k] = thisLine[ThisVars.indexOf(newVar)];
                         } else if (other.vars.contains(newVar.name)) {
-                            newRow[k] = otherLine[lolOther.indexOf(newVar)];
+                            newRow[k] = otherLine[OtherVars.indexOf(newVar)];
                         }
                     }
 
@@ -133,15 +136,16 @@ public class Factor {
             this.vars.add(this.table[0][j]);
         }
 
+        // Return the number of additions performed
         return numMultiplies;
     }
 
-    public int multiply2(Factor other) {
+    public int SecondMultiply(Factor other) {
         int numMultiplies = 0;
 
         ArrayList<Variable> newVariables = new ArrayList<>();
 
-        for(int i=0;i<other.table[0].length-1;i++) {
+        for(int i=0; i < other.table[0].length-1; i++) {
             String str = other.table[0][i];
             for (String var : other.vars) {
                 if (str.equals(var)) {
@@ -157,21 +161,21 @@ public class Factor {
             }
         }
 
-        ArrayList<Variable> lolOther=new ArrayList<>();
-        for(int i=0;i<other.table[0].length-1;i++){
-            String str=other.table[0][i];
-            for(String var: other.vars){
+        ArrayList<Variable> OtherVars = new ArrayList<>();
+        for(int i=0; i < other.table[0].length-1; i++){
+            String str = other.table[0][i];
+            for(String var : other.vars){
                 if(str.equals(var))
-                    lolOther.add(VariableElimination.variablesMap.get(var));
+                    OtherVars.add(VariableElimination.variablesMap.get(var));
             }
         }
 
-        ArrayList<Variable> lolThis=new ArrayList<>();
-        for(int i=0;i<this.table[0].length-1;i++){
-            String str=this.table[0][i];
-            for(String var: this.vars){
+        ArrayList<Variable> ThisVars = new ArrayList<>();
+        for(int i=0; i < this.table[0].length-1; i++){
+            String str = this.table[0][i];
+            for(String var : this.vars){
                 if(str.equals(var))
-                    lolThis.add(VariableElimination.variablesMap.get(var));
+                    ThisVars.add(VariableElimination.variablesMap.get(var));
             }
         }
 
@@ -198,12 +202,12 @@ public class Factor {
             }
         }
 
-        // Iterate through each row in this factor's table
+        // Iterating through each row in this factor's table
         for (int i = 1; i < other.table.length; i++) {
             String[] thisLine = other.table[i];
             double prob1 = Double.parseDouble(thisLine[thisLine.length - 1]);
 
-            // Iterate through each row in the other factor's table
+            // Iterating through each row in the other factor's table
             for (int j = 1; j < this.table.length; j++) {
                 String[] otherLine = this.table[j];
                 double prob2 = Double.parseDouble(otherLine[otherLine.length - 1]);
@@ -211,8 +215,8 @@ public class Factor {
                 // Check if the current rows can be multiplied (consistent assignments for common variables)
                 boolean consistent = true;
                 for (Variable var : commonVariables) {
-                    int thisIndex = lolOther.indexOf(var);
-                    int otherIndex = lolThis.indexOf(var);
+                    int thisIndex = OtherVars.indexOf(var);
+                    int otherIndex = ThisVars.indexOf(var);
                     if (!thisLine[thisIndex].equals(otherLine[otherIndex])) {
                         consistent = false;
                         break;
@@ -227,9 +231,9 @@ public class Factor {
                     for (int k = 0; k < newVariables.size(); k++) {
                         Variable newVar = newVariables.get(k);
                         if (other.vars.contains(newVar.name)) {
-                            newRow[k] = thisLine[lolOther.indexOf(newVar)];
+                            newRow[k] = thisLine[OtherVars.indexOf(newVar)];
                         } else if (this.vars.contains(newVar.name)) {
-                            newRow[k] = otherLine[lolThis.indexOf(newVar)];
+                            newRow[k] = otherLine[ThisVars.indexOf(newVar)];
                         }
                     }
 
@@ -253,10 +257,11 @@ public class Factor {
             this.vars.add(this.table[0][j]);
         }
 
+        // Return the number of additions performed
         return numMultiplies;
     }
 
-    public int sumUp(Variable var) {
+    public int Merging(Variable var) {
         // Create a list of variables excluding the given variable
         ArrayList<Variable> newVariables = new ArrayList<>();
 
@@ -266,16 +271,16 @@ public class Factor {
 
         newVariables.remove(var);
 
-        // Calculate the size of the new table after summing up
+        // Calculate the size of the new table after merging up
         int newTableSize = 1;
         for (Variable v : newVariables) {
             newTableSize *= v.outcomes.size();
         }
 
-        // Initialize a new table for the summed-up factor
+        // Initialize a new table for the merged factor
         String[][] newTable = new String[newTableSize + 1][newVariables.size() + 1];
 
-        // Populate the header row of the new table with variable names and "Probability"
+        // Filling the header row of the new table with variable names and probability
         for (int j = 0; j < newVariables.size(); j++) {
             newTable[0][j] = newVariables.get(j).name;
         }
@@ -284,16 +289,17 @@ public class Factor {
         // Map to store sums of probabilities for each assignment of newVariables
         Map<String, Double> sumMap = new LinkedHashMap<>();
 
-        // Iterate through each row in the current factor's table
+        // Iterating through each row in the current factor's table
         for (int i = 1; i < this.table.length; i++) {
             String[] row = this.table[i];
 
             // Build key for the assignment of variables excluding the given variable
             StringBuilder sb = new StringBuilder();
+
             for (Variable newVar : newVariables) {
                 int originalIndex = this.vars.indexOf(newVar.name);
                 sb.append(row[originalIndex]);
-                sb.append(",");  // Use comma as a delimiter for better separation
+                sb.append(",");
             }
             String assignmentKey = sb.toString();
 
@@ -340,10 +346,12 @@ public class Factor {
         return this.table.length - 1;
     }
 
+    // Normalizing the final probability to give the correct answer
     public int normalize() {
         double sum = 0;
         int numOfAdds = 0;
         int index = 0;
+
         for (String[] row : table) {
             if(index == 0){
                 index++;
@@ -353,14 +361,14 @@ public class Factor {
                 sum += Double.parseDouble(row[this.table[0].length - 1]);
                 numOfAdds++;
             } catch (NumberFormatException e) {
-                // Skip invalid values
+                // Skipping invalid values
             }
         }
         for (int i = 1; i < table.length; i++) {
             try {
                 table[i][this.table[0].length - 1] = String.valueOf(Double.parseDouble(table[i][this.table[0].length - 1]) / sum);
             } catch (NumberFormatException e) {
-                // Skip invalid values
+                // Skipping invalid values
             }
         }
         return numOfAdds-1;

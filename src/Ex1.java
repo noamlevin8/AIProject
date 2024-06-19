@@ -1,23 +1,21 @@
-// CausalChain - yes in line 9 (should be no)
-// CommonCausal - yes in line 9 (should be no)
-// Example1 - 1 in line 6 (should be 0)
-// Example2 - yes in line 1 (should be no), yes in line 7 (should be no)
-
 import org.w3c.dom.*;
 import javax.xml.parsers.*;
 import java.io.*;
 import java.util.*;
 
+// Main class
 public class Ex1
 {
+    // Creating the initial CPT Tables for all the variables in the xml
     private static String[][] createCPTTable(Definition definition, Map<String, Variable> variableMap) {
         Variable variable = variableMap.get(definition.forVar);
+
         if (variable == null) {
             return null;
         }
 
         int numOutcomes = variable.outcomes.size();
-        int numGivenCombinations = definition.probabilities.size() / numOutcomes;
+        int numGivenCombinations = definition.probabilities.size() / numOutcomes; // All the possible combinations for the CPT
 
         // Create the table with appropriate size, including header row
         String[][] table = new String[numGivenCombinations * numOutcomes + 1][definition.givens.size() + 2];
@@ -28,7 +26,7 @@ public class Ex1
         }
 
         table[0][definition.givens.size()] = definition.forVar;
-        table[0][definition.givens.size() + 1] = "Probability";
+        table[0][definition.givens.size() + 1] = "Probability"; // Header for the probability column
 
         // Fill the table rows with the given combinations, outcomes, and probabilities
         int counter = variable.outcomes.size();
@@ -56,7 +54,8 @@ public class Ex1
         return table;
     }
 
-    private static void extract_for_elimination(ArrayList<Variable> isIn, ArrayList<Variable> evidence, ArrayList<Variable> order, ArrayList<Variable> variables, String line,ArrayList<String> evidenceOutcome,ArrayList<String> queryOutcome) {
+    // Extracting the information required for VariableElimination
+    private static void extract_for_elimination(ArrayList<Variable> queryVar, ArrayList<Variable> evidence, ArrayList<Variable> order, ArrayList<Variable> variables, String line,ArrayList<String> evidenceOutcome,ArrayList<String> queryOutcome) {
         String[] parts = line.split(" ");
         String probabilityPart = parts[0];
         String orderPart = parts.length > 1 ? parts[1] : "";
@@ -71,13 +70,14 @@ public class Ex1
         String leftOfPipe = conditionalParts[0];
         String rightOfPipe = conditionalParts.length > 1 ? conditionalParts[1] : "";
 
-        // Add variables to isIn
+        // Add variables to queryVar
         String[] leftVariables = leftOfPipe.split(",");
         for (String var : leftVariables) {
             String[] nameValue = var.split("=");
+
             for(Variable variable : variables){
                 if(variable.name.equals(nameValue[0])){
-                    isIn.add(variable);
+                    queryVar.add(variable);
                     queryOutcome.add(nameValue[1]);
                     break;
                 }
@@ -87,8 +87,10 @@ public class Ex1
         // Add variables to evidence
         if (!rightOfPipe.isEmpty()) {
             String[] rightVariables = rightOfPipe.split(",");
+
             for (String var : rightVariables) {
                 String[] nameValue = var.split("=");
+
                 for (Variable variable : variables) {
                     if (variable.name.equals(nameValue[0])) {
                         evidence.add(variable);
@@ -102,6 +104,7 @@ public class Ex1
         // Add variables to order
         if (!orderPart.isEmpty()) {
             String[] orderVariables = orderPart.split("-");
+
             for (String var : orderVariables) {
                 for (Variable variable : variables) {
                     if (variable.name.equals(var)) {
@@ -113,18 +116,22 @@ public class Ex1
         }
     }
 
-    public static boolean isBayesBall(String line){
+    // Checking if we need to do Bayes Ball
+    public static boolean ifBayesBall(String line){
         int i=0;
-        while(line.charAt(i)==' '){
+
+        while(line.charAt(i) == ' '){
             i++;
         }
         return !line.contains("(") && !line.contains(")");
     }
 
-    public static void extract_for_bayesBall(ArrayList<Variable> isIn, ArrayList<Variable> evidence, ArrayList<Variable> variables, String line) {
+    // Extracting the information required for BayesBall
+    public static void extract_for_bayesBall(ArrayList<Variable> queryVars, ArrayList<Variable> evidence, ArrayList<Variable> variables, String line) {
         // Clear previous evidence
         evidence.clear();
-        isIn.clear();
+        queryVars.clear();
+
         // Split the line into the left and right parts
         String[] parts = line.split("\\|");
         if (parts.length < 1) {
@@ -132,11 +139,12 @@ public class Ex1
             return;
         }
 
-        String leftPart = parts[0]; // B-E
-        String rightPart = parts.length > 1 ? parts[1].trim() : ""; // J=T
+        String leftPart = parts[0];
+        String rightPart = parts.length > 1 ? parts[1].trim() : "";
 
         // Extract start and end variables from the left part
         String[] leftVariables = leftPart.split("-");
+
         if (leftVariables.length < 2) {
             System.err.println("Invalid left part format: " + leftPart);
             return;
@@ -145,22 +153,25 @@ public class Ex1
         String startStr = leftVariables[0];
         String endStr = leftVariables[1];
 
+        // Adding to queryVars the variables that connected to this query
         for (Variable variable : variables) {
             if (variable.name.equals(startStr)) {
-                isIn.add(variable);
+                queryVars.add(variable);
             }
             if (variable.name.equals(endStr)) {
-                isIn.add(variable);
+                queryVars.add(variable);
             }
         }
 
         // Extract evidence from the right part if it exists
         if (!rightPart.isEmpty()) {
-            String[] evidencePairs = rightPart.split(","); // Split by comma to handle multiple evidence pairs
+            String[] evidencePairs = rightPart.split(",");
+
             for (String evidencePair : evidencePairs) {
                 String[] nameValuePair = evidencePair.split("=");
                 if (nameValuePair.length == 2) {
-                    String evidenceVar = nameValuePair[0].trim(); // Evidence variable name
+                    String evidenceVar = nameValuePair[0].trim();
+
                     for (Variable variable : variables) {
                         if (variable.name.equals(evidenceVar)) {
                             evidence.add(variable);
@@ -170,8 +181,10 @@ public class Ex1
             }
         }
     }
+
     public static void main(String[] args)
     {
+        // Reading from the XML
         try
         {
             BufferedReader file = new BufferedReader(new FileReader("input.txt"));
@@ -195,6 +208,7 @@ public class Ex1
             Document doc = dBuilder.parse(inputFile);
             doc.getDocumentElement().normalize();
 
+            // Extracting the variables
             NodeList variableList = doc.getElementsByTagName("VARIABLE");
             ArrayList<Variable> variables = new ArrayList<>();
             Map<String, Variable> variableMap = new HashMap<>();
@@ -205,10 +219,10 @@ public class Ex1
                 if (variableNode.getNodeType() == Node.ELEMENT_NODE)
                 {
                     Element variableElement = (Element) variableNode;
-                    String name = variableElement.getElementsByTagName("NAME").item(0).getTextContent();
+                    String name = variableElement.getElementsByTagName("NAME").item(0).getTextContent(); // Extracting the name of the variable
                     Variable variable = new Variable(name);
 
-                    NodeList outcomeList = variableElement.getElementsByTagName("OUTCOME");
+                    NodeList outcomeList = variableElement.getElementsByTagName("OUTCOME"); // Extracting the outcomes of the variable
                     for (int j = 0; j < outcomeList.getLength(); j++)
                     {
                         variable.addOutcome(outcomeList.item(j).getTextContent());
@@ -219,6 +233,7 @@ public class Ex1
                 }
             }
 
+            // Extracting the required values for the CPT'S
             NodeList definitionList = doc.getElementsByTagName("DEFINITION");
             List<Definition> definitions = new ArrayList<>();
             Map<String, Definition> definitionMap = new HashMap<>();
@@ -229,10 +244,10 @@ public class Ex1
                 if (definitionNode.getNodeType() == Node.ELEMENT_NODE)
                 {
                     Element definitionElement = (Element) definitionNode;
-                    String forVar = definitionElement.getElementsByTagName("FOR").item(0).getTextContent();
+                    String forVar = definitionElement.getElementsByTagName("FOR").item(0).getTextContent(); // The variable which we are constructing a CPT for
                     Definition definition = new Definition(forVar);
 
-                    NodeList givenList = definitionElement.getElementsByTagName("GIVEN");
+                    NodeList givenList = definitionElement.getElementsByTagName("GIVEN"); // Extracting the givens for the variables CPT
                     for (int j = 0; j < givenList.getLength(); j++)
                     {
                         Variable v1 = null;
@@ -260,6 +275,7 @@ public class Ex1
                         }
                     }
 
+                    // Extracting the probability values
                     String table = definitionElement.getElementsByTagName("TABLE").item(0).getTextContent();
                     definition.setTable(table);
 
@@ -278,7 +294,7 @@ public class Ex1
                 cptMap.put(definition.forVar, cptTable);
             }
 
-            // Example: print out the CPT table for each variable (for debugging purposes)
+            // Saving the CPT of each variable in its instance
             for (Variable variable : variables)
             {
                 variable.addCPT(cptMap.get(variable.name));
@@ -286,7 +302,8 @@ public class Ex1
 
             String line;
             while ((line = file.readLine()) != null){
-                if(isBayesBall(line)){
+                // Checking if we need to do Bayes Ball
+                if(ifBayesBall(line)){
                     System.out.println("Bayes Ball:");
 
                     ArrayList<Variable> evidence = new ArrayList<>();
@@ -297,8 +314,10 @@ public class Ex1
                     System.out.println("End: " + queryVariables.get(1));
                     System.out.println("Evidence: " + evidence);
 
-                    BayesBall bayesBallInstance = new BayesBall();
-                    if(bayesBallInstance.bayesBall(queryVariables.get(1),queryVariables.get(0),evidence) && bayesBallInstance.bayesBall(queryVariables.get(0),queryVariables.get(1),evidence)) {
+                    BayesBall bayesBall = new BayesBall();
+
+                    // Checking if from one variable we can get to the other
+                    if(bayesBall.bayesBall(queryVariables.get(1),queryVariables.get(0),evidence) && bayesBall.bayesBall(queryVariables.get(0),queryVariables.get(1),evidence)) {
                         System.out.println(queryVariables.get(1).name + " and " + queryVariables.get(0).name + " are independent\n");
                         myWriter.write("yes\n");
                     }
@@ -316,6 +335,8 @@ public class Ex1
 
                     ArrayList<String> queryOutcome = new ArrayList<>();
                     extract_for_elimination(queryVariables,evidence,order,variables,line,evidenceOutcome,queryOutcome);
+
+                    // From this constructor we do all the algorithm for Variable Elimination
                     VariableElimination variableEliminationInstance = new VariableElimination(queryVariables.get(0),variableMap,order,evidence,evidenceOutcome,myWriter,queryOutcome);
                 }
             }
