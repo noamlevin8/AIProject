@@ -1,7 +1,6 @@
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-//import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,7 +8,7 @@ import java.util.Map;
 public class VariableElimination {
     public static ArrayList<Factor> factors = new ArrayList<>();
     public static Map<String, Variable> variablesMap;
-    public VariableElimination(Variable start, Map<String, Variable> variables, ArrayList<Variable> order, ArrayList<Variable> evidence, ArrayList<String> outcome, FileWriter myWriter, ArrayList<String> queryOutcome, Map<String, String[][]> cpt) throws IOException {
+    public VariableElimination(Variable start, Map<String, Variable> variables, ArrayList<Variable> order, ArrayList<Variable> evidence, ArrayList<String> outcome, FileWriter myWriter, ArrayList<String> queryOutcome) throws IOException {
         variablesMap = variables;
         Map<String, Factor> factorMap = new HashMap<>();
 
@@ -44,153 +43,68 @@ public class VariableElimination {
             for(String n : f.vars)
                 s += n + " ";
             factorMap.put(s, f);
-            //factors.add(new Factor(v.cpt));
         }
 
         if(checkForBuiltIn(factorMap, evidence, start, outcome, queryOutcome, myWriter))
             return;
 
-        //deleteEvidence(variablesMap.get("A"), "F", factorMap);
 
-
-
-//        System.out.println("\nbefore delete");
-//        for (Map.Entry<String, Factor> entry : factorMap.entrySet()) {
-//            //System.out.println("Factor for: " + entry.getKey());
-//            entry.getValue().printFactor();
-//        }
-
-//        for (int i = 0; i < evidence.size(); i++) {
-//            Variable evi = evidence.get(i);
-//            String outcomeValue = outcome.get(i);
-//            for (Factor factor : factors) {
-//                if (factor.getVariables().contains(evi)) {
-//                    factor.evidenceDelete(evi, outcomeValue);
-//                }
-//            }
-//        }
-
-//        System.out.println("evidence size - " + evidence.size());
-//        for(Variable variable : evidence){
-//            System.out.println("evidence: " + variable.name);
-//        }
-
-        for(int i = 0; i < evidence.size(); i++){
-            System.out.println("Evidence - " + evidence.get(i).name + " with value - " + outcome.get(i));
-            deleteEvidence(evidence.get(i), outcome.get(i), factorMap);
+        if(evidence.isEmpty()){
+            for (Map.Entry<String, Factor> entry : factorMap.entrySet())
+            {
+                factors.add(entry.getValue());
+            }
         }
-        System.out.println();
 
-//        System.out.println("Before factor eli: ");
-//        for(Factor f : factors){
-//            f.printFactor();
-//        }
+        else {
+            for (int i = 0; i < evidence.size(); i++) {
+                System.out.println("Evidence - " + evidence.get(i).name + " with value - " + outcome.get(i));
+                deleteEvidence(evidence.get(i), outcome.get(i), factorMap);
+            }
+            System.out.println();
+        }
+
         ArrayList<Factor> remove = new ArrayList<>();
 
-        for(int i = 0; i < factors.size(); i++){
-//            System.out.println("Test factor elimination:");
-//            factors.get(i).printFactor();
-            for(Variable evi : evidence) {
-//                System.out.println("Evi - " + evi.name);
-                if (factors.get(i).vars.contains(evi.name)) {
-//                    System.out.println("Yes");
-                    remove.add(factors.get(i));
-                    //factors.remove(factors.get(i));
+        for (Factor value : factors) {
+            for (Variable evi : evidence) {
+                if (value.vars.contains(evi.name)) {
+                    remove.add(value);
                 }
-//                else
-//                    System.out.println("No");
             }
         }
 
         factors.removeAll(remove);
 
-        for (Factor factor : factors) {
-            if(factor.vars.size()==1 && evidence.contains(VariableElimination.variablesMap.get(factor.vars.get(0)))){
-                factors.remove(factor);
-            }
-        }
-
-        //deleteEvidence(variablesMap.get("A"), "F", factorMap);
-
-//        System.out.println("after delete");
-//        for (Factor factor : factors) {
-//            factor.printFactor();
-//            System.out.print("Vars - ");
-//            for(String str : factor.vars){
-//                System.out.print(str + " ");
-//            }
-//            System.out.println();
-//        }
-
-//        for (Variable v : order) {
-//            factors.add(new Factor(v));
-//        }
-
-//        System.out.print("Order - ");
-//        for (Variable ord : order) {
-//            System.out.print(ord.name + " ");
-//        }
-//        System.out.println();
-
-        //System.out.println("size factors: " + factors.size());
-
         for (Variable ord : order) {
             if (!toAdd.contains(ord)) {
-                //System.out.println("Not adding");
                 continue;
             }
-            //System.out.println("test for");
+
             ArrayList<Factor> newFactors = new ArrayList<>();
-//            int count = 0;
-//            System.out.println("size factors: " + factors.size());
             for (Factor factor : factors) {
-//                System.out.print("Vars - ");
-//                for(String str : factor.vars){
-//                    System.out.print(str + " ");
-//                }
-//                System.out.println();
-//                System.out.println("count: " + ++count);
-//                factor.printFactor();
                 if (!factor.vars.isEmpty() && factor.vars.contains(ord.name)) {
-                    //System.out.println("added factor");
                     newFactors.add(factor);
                 }
             }
             sortFactors(newFactors);
             factors.removeAll(newFactors);
-//            System.out.println("Num of fac: " + factors.size());
 
             Factor newFactor = newFactors.get(0);
-//            System.out.println("print new factor: ");
-//            newFactor.printFactor();
             newFactors.remove(newFactor);
-//            System.out.println("Size new: " + newFactors.size());
             for (Factor factor : newFactors) {
-//                System.out.println("I multipy:");
-//                newFactor.printFactor();
-//                System.out.println("with:");
-//                factor.printFactor();
                 numMultiply += newFactor.multiply(factor);
-//                index++;
-//                System.out.println(index+":");
-//                System.out.println("and i get this:");
-//                newFactor.printFactor();
             }
             numAdds += newFactor.sumUp(ord);
-//            System.out.println("print new factor: ");
-//            newFactor.printFactor();
             factors.add(newFactor);
         }
 
         Factor newFactor=factors.get(0);
         factors.remove(newFactor);
-//        System.out.println("Size at the end - " + factors.size());
+
         for(Factor fr: factors)
             numMultiply += newFactor.multiply(fr);
-//        Factor newFactor = factors.get(0);
-//        numAdds+= newFactor.marginalize();
-//        System.out.println("Before norm: ");
-//        newFactor.printFactor();
+
         numAdds+=newFactor.normalize();
         System.out.println("Final factor:");
         newFactor.printFactor();
@@ -204,9 +118,6 @@ public class VariableElimination {
     }
 
     public static void deleteEvidence(Variable evidence, String value, Map<String, Factor> cpt) {
-        //boolean added = false;
-
-        //ArrayList<String> remove = new ArrayList<>();
 
         for (Map.Entry<String, Factor> entry : cpt.entrySet())
         {
@@ -247,30 +158,15 @@ public class VariableElimination {
                         }
                     }
                     Factor f = new Factor(newFactor);
-//                    System.out.println("Test new factor:");
-//                    f.printFactor();
-//                    if(VariableElimination.factors.contains(entry.getValue()))
-//                        VariableElimination.factors.remove(entry.getValue());
                     VariableElimination.factors.add(f);
-//                    System.out.println("Key to remove: " + entry.getKey());
-//                    remove.add(entry.getKey());
-                    //cpt.remove(entry.getKey());
                     added = true;
                     break;
                 }
-                //VariableElimination.factors.add(entry.getValue());
             }
             if(!added && !VariableElimination.factors.contains(entry.getValue())) {
                 VariableElimination.factors.add(entry.getValue());
-//                System.out.println("Test added factor:");
-//                entry.getValue().printFactor();
             }
-
-            //added = false;
         }
-
-//        for(String r : remove)
-//            cpt.remove(r);
     }
 
     private static void toAddStart(ArrayList<Variable> toAdd, Variable start) {
@@ -297,11 +193,14 @@ public class VariableElimination {
     }
 
     private boolean checkForBuiltIn(Map<String, Factor> factorMap, ArrayList<Variable> evidence, Variable start, ArrayList<String> outcome, ArrayList<String> queryOutcome, FileWriter myWriter) throws IOException {
+
         double probability = 0;
         boolean flag = true;
 
+
         for (Map.Entry<String, Factor> entry : factorMap.entrySet()) {
             if (entry.getValue().vars.contains(start.name)) {
+                entry.getValue().printFactor();
                 // Check if all evidence variables are contained in this factor
                 for (Variable v : evidence) {
                     if (!entry.getValue().vars.contains(v.name)) {
@@ -311,6 +210,17 @@ public class VariableElimination {
                 }
 
                 if (flag) {
+                    boolean fl=true;
+                    for (String v : entry.getValue().vars) {
+                        if(!v.equals(start.name) && !evidence.contains(VariableElimination.variablesMap.get(v))){
+                            fl=false;
+                            break;
+                        }
+                    }
+                    if (!fl) {
+                        break;
+                    }
+
                     String[][] table = entry.getValue().table;
 
                     // Iterate through each row in the table
@@ -344,12 +254,14 @@ public class VariableElimination {
                         // If row matches both evidence and query outcomes, add its probability
                         if (match) {
                             probability += Double.parseDouble(row[row.length - 1]);
+                            break;
                         }
                     }
 
                     // Write the probability to the file
-                    if (probability > 0) {
-                        myWriter.write(probability+",0,0");
+                    if (probability >= 0) {
+                        String roundedNumber = String.format("%.5f", probability);
+                        myWriter.write(roundedNumber+",0,0");
                         myWriter.write("\n");
                         return true; // If found, return true
                     }

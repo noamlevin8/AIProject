@@ -1,3 +1,8 @@
+// CausalChain - yes in line 9 (should be no)
+// CommonCausal - yes in line 9 (should be no)
+// Example1 - 1 in line 6 (should be 0), 19 and 36 in line 8 (should be 11, 20)
+// Example2 - yes in line 1 (should be no), line 3 should be (0.32609,2,3), yes in line 7 (should be no), 15 and 26 in line 8 (should be 11, 16)
+
 import org.w3c.dom.*;
 import javax.xml.parsers.*;
 import java.io.*;
@@ -50,18 +55,6 @@ public class Ex1
 
         return table;
     }
-    private static void printCPTTable(String[][] table)
-    {
-        // Print the header
-        for (String[] row : table)
-        {
-            for (String cell : row)
-            {
-                System.out.print(cell + "\t");
-            }
-            System.out.println();
-        }
-    }
 
     private static void extract_for_elimination(ArrayList<Variable> isIn, ArrayList<Variable> evidence, ArrayList<Variable> order, ArrayList<Variable> variables, String line,ArrayList<String> evidenceOutcome,ArrayList<String> queryOutcome) {
         String[] parts = line.split(" ");
@@ -82,7 +75,6 @@ public class Ex1
         String[] leftVariables = leftOfPipe.split(",");
         for (String var : leftVariables) {
             String[] nameValue = var.split("=");
-//            isIn.add(new Variable(nameValue[0], nameValue[1]));
             for(Variable variable : variables){
                 if(variable.name.equals(nameValue[0])){
                     isIn.add(variable);
@@ -90,7 +82,6 @@ public class Ex1
                     break;
                 }
             }
-//            queryOutcome.add(nameValue[1]);
         }
 
         // Add variables to evidence
@@ -120,32 +111,6 @@ public class Ex1
                 }
             }
         }
-
-//        // Add variables to evidence
-//        String[] rightVariables = rightOfPipe.split(",");
-//        for (String var : rightVariables) {
-//            String[] nameValue = var.split("=");
-////            evidence.add(new Variable(nameValue[0], nameValue[1]));
-//            for(Variable variable : variables){
-//                if(variable.name.equals(nameValue[0])){
-//                    evidence.add(variable);
-//                    evidenceOutcome.add(nameValue[1]);
-//                    break;
-//                }
-//            }
-//        }
-//
-//        // Add variables to order
-//        String[] orderVariables = orderPart.split("-");
-//        for (String var : orderVariables) {
-////            order.add(new Variable(var, null));  // Assuming variables in order have no values
-//            for(Variable variable : variables){
-//                if(variable.name.equals(var)){
-//                    order.add(variable);
-//                    break;
-//                }
-//            }
-//        }
     }
 
     public static boolean isBayesBall(String line){
@@ -168,7 +133,7 @@ public class Ex1
         }
 
         String leftPart = parts[0]; // B-E
-        String rightPart = parts.length > 1 ? parts[1] : ""; // J=T
+        String rightPart = parts.length > 1 ? parts[1].trim() : ""; // J=T
 
         // Extract start and end variables from the left part
         String[] leftVariables = leftPart.split("-");
@@ -176,19 +141,6 @@ public class Ex1
             System.err.println("Invalid left part format: " + leftPart);
             return;
         }
-
-//        char startChar = leftVariables[0].charAt(0); // B
-//        char endChar = leftVariables[1].charAt(0); // E
-//
-//        // Find the start and end variables in the list
-//        for (Variable variable : variables) {
-//            if (variable.name.charAt(0) == startChar) {
-//                isIn.add(variable);
-//            }
-//            if (variable.name.charAt(0) == endChar) {
-//                isIn.add(variable);
-//            }
-//        }
 
         String startStr = leftVariables[0];
         String endStr = leftVariables[1];
@@ -203,43 +155,15 @@ public class Ex1
         }
 
         // Extract evidence from the right part if it exists
-//        if (!rightPart.isEmpty()) {
-//            String[] evidencePairs = rightPart.split("=");
-//            if (evidencePairs.length == 2) {
-//                char evidenceChar = evidencePairs[0].charAt(0); // J
-//                for (Variable variable : variables) {
-//                    if (variable.name.charAt(0) == evidenceChar) {
-//                        evidence.add(variable);
-//                    }
-//                }
-//            } else {
-//                for (int i = 0; i < rightPart.length() - 1; i++) {
-//                    if (rightPart.charAt(i + 1) == '=') {
-//                        for (Variable variable : variables) {
-//                            if (variable.name.charAt(0) == rightPart.charAt(i)) {
-//                                evidence.add(variable);
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-
         if (!rightPart.isEmpty()) {
-            String[] evidencePairs = rightPart.split("=");
-            if (evidencePairs.length == 2) {
-                String evidenceStr = evidencePairs[0]; // J
-                for (Variable variable : variables) {
-                    if (variable.name.equals(evidenceStr)) {
-                        evidence.add(variable);
-                    }
-                }
-            } else {
-                for (int i = 0; i < rightPart.length() - 1; i++) {
-                    if (rightPart.charAt(i + 1) == '=') {
-                        for (Variable variable : variables) {
-                            if (variable.name.charAt(0) == rightPart.charAt(i)) {
-                                evidence.add(variable);
-                            }
+            String[] evidencePairs = rightPart.split(","); // Split by comma to handle multiple evidence pairs
+            for (String evidencePair : evidencePairs) {
+                String[] nameValuePair = evidencePair.split("=");
+                if (nameValuePair.length == 2) {
+                    String evidenceVar = nameValuePair[0].trim(); // Evidence variable name
+                    for (Variable variable : variables) {
+                        if (variable.name.equals(evidenceVar)) {
+                            evidence.add(variable);
                         }
                     }
                 }
@@ -358,19 +282,7 @@ public class Ex1
             for (Variable variable : variables)
             {
                 variable.addCPT(cptMap.get(variable.name));
-//                System.out.println("CPT for: " + variable.name);
-//                printCPTTable(variable.cpt);
-//                System.out.println();
             }
-
-
-//            BufferedReader file = new BufferedReader(new FileReader("input.txt"));
-//            String xmlName = file.readLine(); // To extract the name in order to move to the real data
-//
-//            FileWriter myWriter = new FileWriter("output.txt");
-
-//            for(int i = 0; i < variables.size(); i++)
-//                System.out.println(variables.get(i));
 
             String line;
             while ((line = file.readLine()) != null){
@@ -378,20 +290,20 @@ public class Ex1
                     System.out.println("Bayes Ball:");
 
                     ArrayList<Variable> evidence = new ArrayList<>();
-                    ArrayList<Variable> isIn = new ArrayList<>();
-                    extract_for_bayesBall(isIn,evidence,variables,line);
+                    ArrayList<Variable> queryVariables = new ArrayList<>();
+                    extract_for_bayesBall(queryVariables,evidence,variables,line);
 
-                    System.out.println("Start: " + isIn.get(0));
-                    System.out.println("End: " + isIn.get(1));
+                    System.out.println("Start: " + queryVariables.get(0));
+                    System.out.println("End: " + queryVariables.get(1));
                     System.out.println("Evidence: " + evidence);
 
                     BayesBall bayesBallInstance = new BayesBall();
-                    if(bayesBallInstance.bayesBall(isIn.get(1),isIn.get(0),evidence) && bayesBallInstance.bayesBall(isIn.get(0),isIn.get(1),evidence)) {
-                        System.out.println(isIn.get(1).name + " and " + isIn.get(0).name + " are independent\n");
+                    if(bayesBallInstance.bayesBall(queryVariables.get(1),queryVariables.get(0),evidence) && bayesBallInstance.bayesBall(queryVariables.get(0),queryVariables.get(1),evidence)) {
+                        System.out.println(queryVariables.get(1).name + " and " + queryVariables.get(0).name + " are independent\n");
                         myWriter.write("yes\n");
                     }
                     else {
-                        System.out.println(isIn.get(1).name + " and " + isIn.get(0).name + " are dependent\n");
+                        System.out.println(queryVariables.get(1).name + " and " + queryVariables.get(0).name + " are dependent\n");
                         myWriter.write("no\n");
                     }
                 }
@@ -399,15 +311,12 @@ public class Ex1
                     System.out.println("\nVariable Elimination:");
                     ArrayList<Variable> evidence = new ArrayList<>();
                     ArrayList<String> evidenceOutcome = new ArrayList<>();
-                    ArrayList<Variable> isIn = new ArrayList<>();
+                    ArrayList<Variable> queryVariables = new ArrayList<>();
                     ArrayList<Variable> order = new ArrayList<>();
+
                     ArrayList<String> queryOutcome = new ArrayList<>();
-                    extract_for_elimination(isIn,evidence,order,variables,line,evidenceOutcome,queryOutcome);
-//                    System.out.println("Start: " + isIn.get(0).name);
-//                    System.out.println("evidence: " + evidence);
-//                    System.out.println("order: " + order);
-//                    System.out.println("Evidence outcome - " + evidenceOutcome);
-                    VariableElimination variableEliminationInstance = new VariableElimination(isIn.get(0),variableMap,order,evidence,evidenceOutcome,myWriter,queryOutcome, cptMap);
+                    extract_for_elimination(queryVariables,evidence,order,variables,line,evidenceOutcome,queryOutcome);
+                    VariableElimination variableEliminationInstance = new VariableElimination(queryVariables.get(0),variableMap,order,evidence,evidenceOutcome,myWriter,queryOutcome);
                 }
             }
 
@@ -418,24 +327,6 @@ public class Ex1
             while ((line2 = file2.readLine()) != null){
                 System.out.println(line2);
             }
-
-            //VariableElimination.deleteEvidence(variableMap.get("A"), "F", cptMap);
-//            ArrayList<Variable> evidence = new ArrayList<>();
-//            evidence.add(variableMap.get("A"));
-//            VariableElimination ve = new VariableElimination(variableMap.get("J"), variableMap, null, evidence, null, myWriter,null, cptMap);
-//
-//            System.out.println("\nAfter delete:");
-//            for (Factor factor : VariableElimination.factors)
-//            {
-//                System.out.print("Factor for: ");
-//                for(String variable : factor.vars)
-//                    System.out.print(variable + " ");
-//                System.out.print("\n");
-//                printCPTTable(factor.table);
-//                System.out.println();
-//            }
-
-
 
         } catch (Exception e)
         {

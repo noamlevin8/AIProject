@@ -16,10 +16,6 @@ public class Definition {
         v2.addChildren(v1);
     }
 
-//    void setTable(String table) {
-//        this.table = table;
-//    }
-
     void setTable(String table) {
         String[] probs = table.trim().split("\\s+");
         for (String prob : probs) {
@@ -27,14 +23,6 @@ public class Definition {
         }
     }
 
-    //    @Override
-//    public String toString() {
-//        return "Definition{" +
-//                "forVar='" + forVar + '\'' +
-//                ", givens=" + givens +
-//                ", table='" + table + '\'' +
-//                '}';
-//    }
     @Override
     public String toString() {
         return "Definition{" +
