@@ -1,7 +1,7 @@
 // CausalChain - yes in line 9 (should be no)
 // CommonCausal - yes in line 9 (should be no)
-// Example1 - 1 in line 6 (should be 0), 19 and 36 in line 8 (should be 11, 20)
-// Example2 - yes in line 1 (should be no), line 3 should be (0.32609,2,3), yes in line 7 (should be no), 15 and 26 in line 8 (should be 11, 16)
+// Example1 - 1 in line 6 (should be 0)
+// Example2 - yes in line 1 (should be no), yes in line 7 (should be no)
 
 import org.w3c.dom.*;
 import javax.xml.parsers.*;

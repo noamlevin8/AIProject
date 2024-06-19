@@ -16,21 +16,28 @@ public class VariableElimination {
         double probability = 0;
         ArrayList<Variable> toAdd = new ArrayList<>();
 
-        for (Map.Entry<String, Variable> entry : variables.entrySet()) {
-            toAdd.add(entry.getValue());
-        }
-
         toAddStart(toAdd, start);
+        for (Variable v : evidence)
+            toAddStart(toAdd,v);
         BayesBall ball = new BayesBall();
 
-//        for (Variable v : evidence) {
-//            toAddStart(toAdd, v);
-//        }
-//        for (Variable v : order) {
-//            toAddStart(toAdd, v);
-//        }
-
         removeIndependentVariables(toAdd,start,ball,evidence);
+
+//        for (Map.Entry<String, Variable> entry : variables.entrySet()) {
+//            toAdd.add(entry.getValue());
+//        }
+//
+//        toAddStart(toAdd, start);
+//        BayesBall ball = new BayesBall();
+//
+////        for (Variable v : evidence) {
+////            toAddStart(toAdd, v);
+////        }
+////        for (Variable v : order) {
+////            toAddStart(toAdd, v);
+////        }
+//
+//        removeIndependentVariables(toAdd,start,ball,evidence);
 
         for (Variable v : toAdd) {
             System.out.println("name: " + v.name);
@@ -194,14 +201,27 @@ public class VariableElimination {
 
     private boolean checkForBuiltIn(Map<String, Factor> factorMap, ArrayList<Variable> evidence, Variable start, ArrayList<String> outcome, ArrayList<String> queryOutcome, FileWriter myWriter) throws IOException {
 
-        double probability = 0;
+        double probability = -1;
         boolean flag = true;
+        int count = 0;
 
 
         for (Map.Entry<String, Factor> entry : factorMap.entrySet()) {
             if (entry.getValue().vars.contains(start.name)) {
-                entry.getValue().printFactor();
+//                entry.getValue().printFactor();
                 // Check if all evidence variables are contained in this factor
+
+                for(int j = 0; j < entry.getValue().table[0].length - 1; j++){
+                    if(evidence.contains(VariableElimination.variablesMap.get(entry.getValue().table[0][j]))){
+                        count++;
+                    }
+                    else
+                        break;
+                }
+
+                if (count != evidence.size())
+                    return false;
+
                 for (Variable v : evidence) {
                     if (!entry.getValue().vars.contains(v.name)) {
                         flag = false;
@@ -253,7 +273,12 @@ public class VariableElimination {
 
                         // If row matches both evidence and query outcomes, add its probability
                         if (match) {
-                            probability += Double.parseDouble(row[row.length - 1]);
+                            if(probability == -1)
+                                probability = Double.parseDouble(row[row.length - 1]);
+
+                            else
+                                probability += Double.parseDouble(row[row.length - 1]);
+
                             break;
                         }
                     }
