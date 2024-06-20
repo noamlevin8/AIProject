@@ -310,8 +310,8 @@ public class Ex1
                     ArrayList<Variable> queryVariables = new ArrayList<>();
                     extract_for_bayesBall(queryVariables,evidence,variables,line);
 
-                    System.out.println("Start: " + queryVariables.get(0));
-                    System.out.println("End: " + queryVariables.get(1));
+                    System.out.println("Start: " + queryVariables.get(0).name);
+                    System.out.println("End: " + queryVariables.get(1).name);
                     System.out.println("Evidence: " + evidence);
 
                     BayesBall bayesBall = new BayesBall();

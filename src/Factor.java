@@ -22,7 +22,7 @@ public class Factor {
             return this.SecondMultiply(other);
         }
 
-        int numMultiplies = 0;
+        int numOfMultiplictions = 0;
 
         ArrayList<Variable> newVariables = new ArrayList<>();
 
@@ -120,8 +120,8 @@ public class Factor {
                     newRow[newTable[0].length - 1] = String.valueOf(prob1 * prob2);
 
                     // Add the new row to the new table
-                    newTable[numMultiplies + 1] = newRow;
-                    numMultiplies++;
+                    newTable[numOfMultiplictions + 1] = newRow;
+                    numOfMultiplictions++;
                 }
             }
         }
@@ -137,11 +137,11 @@ public class Factor {
         }
 
         // Return the number of additions performed
-        return numMultiplies;
+        return numOfMultiplictions;
     }
 
     public int SecondMultiply(Factor other) {
-        int numMultiplies = 0;
+        int numOfMultiplictions = 0;
 
         ArrayList<Variable> newVariables = new ArrayList<>();
 
@@ -241,8 +241,8 @@ public class Factor {
                     newRow[newTable[0].length - 1] = String.valueOf(prob1 * prob2);
 
                     // Add the new row to the new table
-                    newTable[numMultiplies + 1] = newRow;
-                    numMultiplies++;
+                    newTable[numOfMultiplictions + 1] = newRow;
+                    numOfMultiplictions++;
                 }
             }
         }
@@ -258,7 +258,7 @@ public class Factor {
         }
 
         // Return the number of additions performed
-        return numMultiplies;
+        return numOfMultiplictions;
     }
 
     public int Merging(Variable var) {
@@ -349,7 +349,7 @@ public class Factor {
     // Normalizing the final probability to give the correct answer
     public int normalize() {
         double sum = 0;
-        int numOfAdds = 0;
+        int numOfAdditions = 0;
         int index = 0;
 
         for (String[] row : table) {
@@ -359,7 +359,7 @@ public class Factor {
             }
             try {
                 sum += Double.parseDouble(row[this.table[0].length - 1]);
-                numOfAdds++;
+                numOfAdditions++;
             } catch (NumberFormatException e) {
                 // Skipping invalid values
             }
@@ -371,7 +371,7 @@ public class Factor {
                 // Skipping invalid values
             }
         }
-        return numOfAdds-1;
+        return numOfAdditions-1;
     }
 
     public void printFactor()

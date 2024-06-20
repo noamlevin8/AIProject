@@ -7,22 +7,22 @@ import java.util.Map;
 
 public class VariableElimination {
     public static ArrayList<Factor> factors = new ArrayList<>();
-    public static Map<String, Variable> variablesMap;
+    public static Map<String, Variable> variablesMap; // A map of all the variables by their name
 
     // The main function for the Variable Elimination
     public VariableElimination(Variable start, Map<String, Variable> variables, ArrayList<Variable> order, ArrayList<Variable> evidence, ArrayList<String> outcome, FileWriter myWriter, ArrayList<String> queryOutcome) throws IOException {
         variablesMap = variables;
         Map<String, Factor> factorMap = new HashMap<>();
 
-        int numAdds = 0, numMultiply = 0;
+        int numOfAdditions = 0, numOfMultiplictions = 0;
         double probability = 0;
         ArrayList<Variable> relevant = new ArrayList<>();
 
         // Getting the relevant variables
-        relevantStart(relevant, start);
+        relevantFromStart(relevant, start);
 
         for (Variable v : evidence)
-            relevantStart(relevant,v);
+            relevantFromStart(relevant,v);
 
         BayesBall ball = new BayesBall();
 
@@ -44,7 +44,7 @@ public class VariableElimination {
         }
 
         // Checking if we can get the answer from the initial CPT'S
-        if(checkForBuiltIn(factorMap, evidence, start, outcome, queryOutcome, myWriter))
+        if(checkInCPTS(factorMap, evidence, start, outcome, queryOutcome, myWriter))
             return;
 
         // If we don't have any evidence we add all the CPT'S to the factor list
@@ -98,10 +98,10 @@ public class VariableElimination {
             newFactors.remove(newFactor);
 
             for (Factor factor : newFactors) {
-                numMultiply += newFactor.multiply(factor);
+                numOfMultiplictions += newFactor.multiply(factor);
             }
 
-            numAdds += newFactor.Merging(ord);
+            numOfAdditions += newFactor.Merging(ord);
             factors.add(newFactor);
         }
 
@@ -109,16 +109,16 @@ public class VariableElimination {
         factors.remove(newFactor);
 
         for(Factor fr: factors)
-            numMultiply += newFactor.multiply(fr);
+            numOfMultiplictions += newFactor.multiply(fr);
 
-        numAdds += newFactor.normalize();
+        numOfAdditions += newFactor.normalize();
         System.out.println("Final factor:");
         newFactor.printFactor();
 
         int index1 = start.outcomes.indexOf(queryOutcome.get(0));
         probability = Double.parseDouble(newFactor.table[index1+1][newFactor.table[0].length - 1]);
         String roundedNumber = String.format("%.5f", probability);
-        myWriter.write(roundedNumber + "," + numAdds + "," + numMultiply + "\n");
+        myWriter.write(roundedNumber + "," + numOfAdditions + "," + numOfMultiplictions + "\n");
         System.out.print("Finish\n");
         factors.clear();
     }
@@ -128,7 +128,7 @@ public class VariableElimination {
 
         for (Map.Entry<String, Factor> entry : cpt.entrySet())
         {
-            boolean added = false;
+            boolean added = false; // In order to know if in the current iteration we added a factor
 
             for(int j = 0; j < entry.getValue().table[0].length-1; j++)
             {
@@ -136,9 +136,9 @@ public class VariableElimination {
                 {
                     String[][] newFactor = new String[entry.getValue().table.length / evidence.outcomes.size() + 1][entry.getValue().table[0].length - 1];
 
-                    int index1 = 1;
-                    int index2 = 0;
-                    int index3 = 0;
+                    int index1 = 1; // New factor's rows
+                    int index2 = 0; // New factor's columns
+                    int index3 = 0; // New factor's columns for the header row
 
                     // First row
                     for(int k = 0; k < entry.getValue().table[0].length; k++)
@@ -180,14 +180,14 @@ public class VariableElimination {
     }
 
     // Adding to a list all the relevant variables
-    private static void relevantStart(ArrayList<Variable> relevant, Variable start) {
+    private static void relevantFromStart(ArrayList<Variable> relevant, Variable start) {
         if (relevant.contains(start)) {
             return;
         }
 
         relevant.add(start);
         for (Variable parent : start.parents) {
-            relevantStart(relevant, parent);
+            relevantFromStart(relevant, parent);
         }
     }
 
@@ -207,10 +207,10 @@ public class VariableElimination {
     }
 
     // Checking if we can return the answer from the initial CPT'S
-    private boolean checkForBuiltIn(Map<String, Factor> factorMap, ArrayList<Variable> evidence, Variable start, ArrayList<String> outcome, ArrayList<String> queryOutcome, FileWriter myWriter) throws IOException {
+    private boolean checkInCPTS(Map<String, Factor> factorMap, ArrayList<Variable> evidence, Variable start, ArrayList<String> outcome, ArrayList<String> queryOutcome, FileWriter myWriter) throws IOException {
 
         double probability = -1;
-        boolean flag = true; // For checking evidence
+        boolean eviFlag = true; // For checking evidence
         int count = 0;
 
 
@@ -226,26 +226,26 @@ public class VariableElimination {
                         break;
                 }
 
-                // Not current table
+                // Not the correct table
                 if (count != evidence.size())
                     break;
 
                 for (Variable v : evidence) {
                     if (!entry.getValue().vars.contains(v.name)) {
-                        flag = false;
+                        eviFlag = false;
                         break;
                     }
                 }
 
-                if (flag) {
-                    boolean fl = true; // For checking the start
+                if (eviFlag) {
+                    boolean startFlag = true; // For checking the start
                     for (String v : entry.getValue().vars) {
                         if(!v.equals(start.name) && !evidence.contains(VariableElimination.variablesMap.get(v))){
-                            fl = false;
+                            startFlag = false;
                             break;
                         }
                     }
-                    if (!fl) {
+                    if (!startFlag) {
                         break;
                     }
 
@@ -254,7 +254,7 @@ public class VariableElimination {
                     // Iterating through each row in the table
                     for (int i = 1; i < table.length; i++) {
                         String[] row = table[i];
-                        boolean match = true; // For checking if we found the value
+                        boolean foundMatch = true; // For checking if we found the value
 
                         // Check if the row matches the evidence and query outcomes
                         for (int j = 0; j < entry.getValue().vars.size(); j++) {
@@ -264,7 +264,7 @@ public class VariableElimination {
                             if (evidence.contains(var)) {
                                 int evidenceIndex = evidence.indexOf(var);
                                 if (!row[j].equals(outcome.get(evidenceIndex))) {
-                                    match = false;
+                                    foundMatch = false;
                                     break;
                                 }
                             }
@@ -273,14 +273,14 @@ public class VariableElimination {
                             if (var.equals(start)) {
                                 int queryIndex = entry.getValue().vars.indexOf(start.name);
                                 if (!row[queryIndex].equals(queryOutcome.get(0))) {
-                                    match = false;
+                                    foundMatch = false;
                                     break;
                                 }
                             }
                         }
 
                         // If row matches both evidence and query outcomes, add its probability
-                        if (match) {
+                        if (foundMatch) {
                             if(probability == -1)
                                 probability = Double.parseDouble(row[row.length - 1]);
 
@@ -294,7 +294,7 @@ public class VariableElimination {
                     // Write the probability to the file
                     if (probability >= 0) {
                         String roundedNumber = String.format("%.5f", probability);
-                        myWriter.write(roundedNumber+",0,0");
+                        myWriter.write(roundedNumber + ",0,0");
                         myWriter.write("\n");
                         return true; // If found, return true
                     }
